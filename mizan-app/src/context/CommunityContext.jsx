@@ -53,8 +53,6 @@ function weightedPick(rng, items, weights) {
   return items[items.length - 1]
 }
 
-const CIRCLE_IDS = ['circle-msa-grad', 'circle-sisters', 'circle-ramadan-emergency']
-
 function generateCongregation(count) {
   const rng = mulberry32(20260418)
   const members = []
@@ -78,17 +76,6 @@ function generateCongregation(count) {
 
     const givingPattern = patternSlots[i]
 
-    // Giving mode: 62% direct, 38% compound, 17% jariyah overlap
-    const modeRoll = rng()
-    let givingMode
-    if (modeRoll < 0.17) {
-      givingMode = ['compound', 'jariyah']
-    } else if (modeRoll < 0.38) {
-      givingMode = ['compound']
-    } else {
-      givingMode = ['direct']
-    }
-
     // Monthly amount clustered $40-$150 but range $20-$500
     let monthlyGivingAmount
     const amtRoll = rng()
@@ -107,12 +94,6 @@ function generateCongregation(count) {
 
     const preferredCause = weightedPick(rng, CAUSES, CAUSE_WEIGHTS)
 
-    // Assign some members to circles
-    let activeCircle = null
-    if (i < 12) activeCircle = CIRCLE_IDS[0]
-    else if (i < 20) activeCircle = CIRCLE_IDS[1]
-    else if (i < 25) activeCircle = CIRCLE_IDS[2]
-
     const joinYear = 2023 + Math.floor(rng() * 3)
     const joinMonth = String(Math.floor(1 + rng() * 12)).padStart(2, '0')
     const joinDay = String(Math.floor(1 + rng() * 28)).padStart(2, '0')
@@ -122,11 +103,9 @@ function generateCongregation(count) {
       name: `${firstName} ${lastName}`,
       joinedDate: `${joinYear}-${joinMonth}-${joinDay}`,
       givingPattern,
-      givingMode,
       monthlyGivingAmount,
       totalGiven,
       preferredCause,
-      activeCircle,
       activeThisMonth: rng() < 0.66
     })
   }
@@ -135,89 +114,169 @@ function generateCongregation(count) {
 }
 
 // ---------------------------------------------------------------------------
-// Pool history for MSA Graduate Circle
+// Welfare Cases (pre-seeded)
 // ---------------------------------------------------------------------------
-const msaPoolHistory = [
-  { date: '2025-11-01', description: 'Circle formed — 8 founding members pledge $200/mo', amount: 1600, balance: 1600 },
-  { date: '2025-12-01', description: 'Monthly contributions collected', amount: 1600, balance: 3200 },
-  { date: '2026-01-01', description: 'Monthly contributions collected', amount: 1600, balance: 4800 },
-  { date: '2026-01-18', description: 'Loan disbursed to Omar Osman — tuition', amount: -1800, balance: 3000 },
-  { date: '2026-02-01', description: 'Monthly contributions collected (4 new members joined)', amount: 2400, balance: 5400 },
-  { date: '2026-02-28', description: 'Loan repayment received from Omar Osman', amount: 600, balance: 6000 },
-  { date: '2026-03-01', description: 'Monthly contributions collected', amount: 2400, balance: 8400 },
-  { date: '2026-03-15', description: 'Loan disbursed to Fatima Al-Farsi — medical', amount: -1400, balance: 7000 }
+const now = new Date()
+
+function daysAgo(n) {
+  const d = new Date(now)
+  d.setDate(d.getDate() - n)
+  return d.toISOString()
+}
+
+function hoursAgo(n) {
+  const d = new Date(now)
+  d.setHours(d.getHours() - n)
+  return d.toISOString()
+}
+
+function weeksAgo(n) {
+  return daysAgo(n * 7)
+}
+
+const initialWelfareCases = [
+  // INCOMING (3)
+  {
+    id: 'wc-1',
+    type: 'zakat',
+    purpose: 'Rent assistance',
+    amount: 800,
+    urgency: 'urgent',
+    submittedAt: daysAgo(2),
+    mosqueTenure: '2+ years',
+    householdSize: 4,
+    algorithmConfidence: 87,
+    zakatEligible: true,
+    category: 'fuqara',
+    status: 'incoming',
+    notes: []
+  },
+  {
+    id: 'wc-2',
+    type: 'qard_hassan',
+    purpose: 'Car repair',
+    amount: 500,
+    urgency: 'high',
+    submittedAt: daysAgo(1),
+    mosqueTenure: '6mo-2yr',
+    householdSize: 2,
+    algorithmConfidence: 72,
+    zakatEligible: false,
+    status: 'incoming',
+    notes: []
+  },
+  {
+    id: 'wc-3',
+    type: 'sadaqah',
+    purpose: 'Medical bills',
+    amount: 300,
+    urgency: 'medium',
+    submittedAt: hoursAgo(4),
+    mosqueTenure: '2+ years',
+    householdSize: 1,
+    algorithmConfidence: 91,
+    zakatEligible: false,
+    status: 'incoming',
+    notes: []
+  },
+
+  // IN_REVIEW (2)
+  {
+    id: 'wc-4',
+    type: 'zakat',
+    purpose: 'Tuition assistance',
+    amount: 1200,
+    urgency: 'high',
+    submittedAt: daysAgo(5),
+    mosqueTenure: '2+ years',
+    householdSize: 5,
+    algorithmConfidence: 94,
+    zakatEligible: true,
+    category: 'ibn_sabil',
+    status: 'in_review',
+    assignedTo: 'Sheikh Abdullah',
+    notes: []
+  },
+  {
+    id: 'wc-5',
+    type: 'qard_hassan',
+    purpose: 'Utility bills',
+    amount: 200,
+    urgency: 'medium',
+    submittedAt: daysAgo(3),
+    mosqueTenure: '6mo-2yr',
+    householdSize: 3,
+    algorithmConfidence: 65,
+    zakatEligible: false,
+    status: 'in_review',
+    assignedTo: null,
+    notes: []
+  },
+
+  // RESOLVED (3)
+  {
+    id: 'wc-6',
+    type: 'zakat',
+    purpose: 'Food assistance',
+    amount: 400,
+    urgency: 'medium',
+    submittedAt: daysAgo(5),
+    mosqueTenure: '2+ years',
+    householdSize: 3,
+    algorithmConfidence: 88,
+    zakatEligible: true,
+    category: 'fuqara',
+    status: 'resolved',
+    resolvedAt: daysAgo(3),
+    resolution: 'zakat_distributed',
+    daysToResolve: 2,
+    notes: []
+  },
+  {
+    id: 'wc-7',
+    type: 'qard_hassan',
+    purpose: 'Emergency travel',
+    amount: 600,
+    urgency: 'high',
+    submittedAt: daysAgo(11),
+    mosqueTenure: '2+ years',
+    householdSize: 2,
+    algorithmConfidence: 78,
+    zakatEligible: false,
+    status: 'resolved',
+    resolvedAt: weeksAgo(1),
+    resolution: 'loan_approved',
+    daysToResolve: 4,
+    notes: []
+  },
+  {
+    id: 'wc-8',
+    type: 'sadaqah',
+    purpose: 'Funeral expenses',
+    amount: 500,
+    urgency: 'urgent',
+    submittedAt: daysAgo(15),
+    mosqueTenure: '2+ years',
+    householdSize: 4,
+    algorithmConfidence: 95,
+    zakatEligible: false,
+    status: 'resolved',
+    resolvedAt: weeksAgo(2),
+    resolution: 'sadaqah_provided',
+    daysToResolve: 1,
+    notes: []
+  }
 ]
 
 // ---------------------------------------------------------------------------
-// Circles
+// Zakat Pool
 // ---------------------------------------------------------------------------
-function buildInitialCircles(members) {
-  const msaMembers = members.filter((m) => m.activeCircle === 'circle-msa-grad')
-  const sistersMembers = members.filter((m) => m.activeCircle === 'circle-sisters')
-  const ramadanMembers = members.filter((m) => m.activeCircle === 'circle-ramadan-emergency')
-
-  return [
-    {
-      id: 'circle-msa-grad',
-      name: 'MSA Graduate Circle',
-      type: 'qard-hasan',
-      members: msaMembers.map((m) => m.memberId),
-      monthlyPledge: 200,
-      totalPooled: 8400,
-      availableCapital: 7000,
-      activeLoans: 2,
-      pendingVotes: 1,
-      poolHistory: msaPoolHistory,
-      repaymentRate: 94,
-      poolHealthScore: 82,
-      createdAt: '2025-11-01T00:00:00Z',
-      approvalRules: { quorum: 0.6, approvalThreshold: 0.75, maxLoanPercent: 40 },
-      maxLoanPercent: 40
-    },
-    {
-      id: 'circle-sisters',
-      name: 'Sisters Circle',
-      type: 'qard-hasan',
-      members: sistersMembers.map((m) => m.memberId),
-      monthlyPledge: 120,
-      totalPooled: 3840,
-      availableCapital: 2940,
-      activeLoans: 1,
-      pendingVotes: 0,
-      poolHistory: [
-        { date: '2025-12-01', description: 'Circle formed', amount: 960, balance: 960 },
-        { date: '2026-01-01', description: 'Monthly contributions', amount: 960, balance: 1920 },
-        { date: '2026-02-01', description: 'Monthly contributions', amount: 960, balance: 2880 },
-        { date: '2026-02-20', description: 'Loan disbursed — emergency rent', amount: -900, balance: 1980 },
-        { date: '2026-03-01', description: 'Monthly contributions', amount: 960, balance: 2940 },
-        { date: '2026-04-01', description: 'Monthly contributions', amount: 960, balance: 3900 }
-      ],
-      repaymentRate: 100,
-      poolHealthScore: 96,
-      createdAt: '2025-12-01T00:00:00Z',
-      approvalRules: { quorum: 0.5, approvalThreshold: 0.67, maxLoanPercent: 35 },
-      maxLoanPercent: 35
-    },
-    {
-      id: 'circle-ramadan-emergency',
-      name: 'Ramadan Emergency Circle',
-      type: 'emergency',
-      members: ramadanMembers.map((m) => m.memberId),
-      monthlyPledge: 100,
-      totalPooled: 500,
-      availableCapital: 500,
-      activeLoans: 0,
-      pendingVotes: 0,
-      poolHistory: [
-        { date: '2026-03-28', description: 'Circle formed for Ramadan emergency aid', amount: 500, balance: 500 }
-      ],
-      repaymentRate: null,
-      poolHealthScore: 100,
-      createdAt: '2026-03-28T00:00:00Z',
-      approvalRules: { quorum: 0.5, approvalThreshold: 0.6, maxLoanPercent: 50 },
-      maxLoanPercent: 50
-    }
-  ]
+const initialZakatPool = {
+  zakatReceived: 6800,
+  zakatDistributed: 3200,
+  zakatRemaining: 3600,
+  lunarYearDaysRemaining: 47,
+  lunarYearProgress: 0.87
 }
 
 // ---------------------------------------------------------------------------
@@ -277,7 +336,7 @@ function generateVouchHistory() {
 }
 
 // ---------------------------------------------------------------------------
-// Events
+// Events (with correlation data)
 // ---------------------------------------------------------------------------
 const initialEvents = [
   {
@@ -288,7 +347,8 @@ const initialEvents = [
     givers: 18,
     totalRaised: 3200,
     correlationMultiplier: 12.4,
-    type: 'celebration'
+    type: 'celebration',
+    followupSent: false
   },
   {
     id: 'event-ramadan-27',
@@ -298,7 +358,8 @@ const initialEvents = [
     givers: 14,
     totalRaised: 2140,
     correlationMultiplier: 7.6,
-    type: 'spiritual'
+    type: 'spiritual',
+    followupSent: false
   },
   {
     id: 'event-jummah-fundraiser',
@@ -308,7 +369,8 @@ const initialEvents = [
     givers: 8,
     totalRaised: 840,
     correlationMultiplier: 3.2,
-    type: 'fundraiser'
+    type: 'fundraiser',
+    followupSent: false
   },
   {
     id: 'event-finance-workshop',
@@ -318,8 +380,18 @@ const initialEvents = [
     givers: 6,
     totalRaised: 580,
     correlationMultiplier: 2.2,
-    type: 'education'
+    type: 'education',
+    followupSent: true
   }
+]
+
+// ---------------------------------------------------------------------------
+// Welfare Ledger (tracks all zakat/sadaqah distributions)
+// ---------------------------------------------------------------------------
+const initialWelfareLedger = [
+  { id: 'led-1', caseId: 'wc-6', type: 'zakat', amount: 400, resolution: 'zakat_distributed', resolvedAt: daysAgo(3) },
+  { id: 'led-2', caseId: 'wc-7', type: 'qard_hassan', amount: 600, resolution: 'loan_approved', resolvedAt: weeksAgo(1) },
+  { id: 'led-3', caseId: 'wc-8', type: 'sadaqah', amount: 500, resolution: 'sadaqah_provided', resolvedAt: weeksAgo(2) }
 ]
 
 // ---------------------------------------------------------------------------
@@ -333,17 +405,6 @@ function deriveAggregateStats(members) {
     .reduce((s, m) => s + m.monthlyGivingAmount, 0)
 
   const total = members.length
-
-  // Giving mode breakdown
-  const directCount = members.filter((m) => m.givingMode.includes('direct')).length
-  const compoundCount = members.filter((m) => m.givingMode.includes('compound')).length
-  const jariyahCount = members.filter((m) => m.givingMode.includes('jariyah')).length
-
-  const givingBreakdown = {
-    direct: Math.round((directCount / total) * 100),
-    compound: Math.round((compoundCount / total) * 100),
-    jariyah: Math.round((jariyahCount / total) * 100)
-  }
 
   // Cause distribution
   const causeCounts = {}
@@ -369,7 +430,6 @@ function deriveAggregateStats(members) {
     totalFamiliesHelped: 89,
     activeGiversThisMonth,
     monthlyGiving,
-    givingBreakdown,
     causeDistribution,
     frequencyDistribution
   }
@@ -382,7 +442,6 @@ export function CommunityProvider({ children }) {
   // Mosque identity
   const [mosqueIdentity] = useState({
     mosqueName: 'Islamic Center of Austin',
-    mosqueAddress: '123 Main St, Austin TX 78701',
     adminName: 'Sheikh Abdullah Al-Farsi',
     adminRole: 'Imam',
     mosqueCode: 'ICA-AUSTIN-2847',
@@ -393,8 +452,14 @@ export function CommunityProvider({ children }) {
   // Congregation
   const [congregation, setCongregation] = useState(() => generateCongregation(47))
 
-  // Circles
-  const [circles, setCircles] = useState(() => buildInitialCircles(generateCongregation(47)))
+  // Welfare cases
+  const [welfareCases, setWelfareCases] = useState(initialWelfareCases)
+
+  // Welfare ledger
+  const [welfareLedger, setWelfareLedger] = useState(initialWelfareLedger)
+
+  // Zakat pool
+  const [zakatPool, setZakatPool] = useState(initialZakatPool)
 
   // Vouching
   const [vouchQueue, setVouchQueue] = useState(initialVouchQueue)
@@ -403,165 +468,223 @@ export function CommunityProvider({ children }) {
   // Events
   const [events, setEvents] = useState(initialEvents)
 
+  // -------------------------------------------------------------------------
+  // Aggregate stats (computed)
+  // -------------------------------------------------------------------------
+  const aggregateStats = useMemo(() => deriveAggregateStats(congregation), [congregation])
+
+  // -------------------------------------------------------------------------
+  // Congregation Health Score (computed)
+  // -------------------------------------------------------------------------
+  const congregationHealthScore = useMemo(() => {
+    const activeGivers = congregation.filter((m) => m.activeThisMonth).length
+    const total = congregation.length || 1
+
+    // Giving frequency component (0-25)
+    const givingFreq = Math.round((activeGivers / total) * 25)
+
+    // Welfare speed component (0-25): what fraction of resolved cases were resolved in 7 days or less
+    const resolvedCases = welfareCases.filter((c) => c.status === 'resolved')
+    const totalResolved = resolvedCases.length || 1
+    const resolvedIn7Days = resolvedCases.filter((c) => (c.daysToResolve || 0) <= 7).length
+    const welfareSpeed = Math.round((resolvedIn7Days / totalResolved) * 25)
+
+    // Zakat progress component (0-25): are we on track to distribute by year end?
+    const { zakatDistributed, zakatReceived, lunarYearProgress } = zakatPool
+    const zakatProgress = Math.round(
+      (zakatDistributed / (zakatReceived || 1)) * lunarYearProgress * 25
+    )
+
+    // Engagement component (0-25)
+    const engagement = Math.round((activeGivers / total) * 25)
+
+    const score = Math.min(100, givingFreq + welfareSpeed + zakatProgress + engagement)
+    const interpretation = score >= 75 ? 'Strong' : score >= 50 ? 'Moderate' : 'Needs attention'
+
+    return { score, givingFreq, welfareSpeed, zakatProgress, engagement, interpretation }
+  }, [congregation, welfareCases, zakatPool])
+
+  // -------------------------------------------------------------------------
+  // Giving Alerts (computed)
+  // -------------------------------------------------------------------------
+  const givingAlerts = useMemo(() => {
+    const alerts = []
+
+    // Urgent: welfare cases needing immediate attention
+    const urgentCases = welfareCases.filter(
+      (c) => c.status === 'incoming' && c.urgency === 'urgent'
+    )
+    if (urgentCases.length > 0) {
+      alerts.push({
+        type: 'urgent',
+        title: `${urgentCases.length} urgent welfare case${urgentCases.length > 1 ? 's' : ''} awaiting review`,
+        detail: urgentCases.map((c) => `${c.purpose} ($${c.amount})`).join(', ')
+      })
+    }
+
+    // Warning: zakat deadline approaching
+    if (zakatPool.lunarYearDaysRemaining <= 60 && zakatPool.zakatRemaining > 0) {
+      alerts.push({
+        type: 'warning',
+        title: `$${zakatPool.zakatRemaining.toLocaleString()} zakat undistributed with ${zakatPool.lunarYearDaysRemaining} days remaining`,
+        detail: 'Prioritize eligible welfare cases to distribute zakat before the lunar year ends.'
+      })
+    }
+
+    // Warning: sporadic givers
+    const sporadicPercent = aggregateStats.frequencyDistribution?.sporadic || 0
+    if (sporadicPercent > 35) {
+      alerts.push({
+        type: 'warning',
+        title: `${sporadicPercent}% of congregation gives sporadically`,
+        detail: 'A giving streak campaign typically re-engages 40% of sporadic givers.'
+      })
+    }
+
+    // Info: lapsed members
+    const lapsedCount = congregation.filter((m) => !m.activeThisMonth).length
+    if (lapsedCount > 10) {
+      alerts.push({
+        type: 'info',
+        title: `${lapsedCount} members have not given this month`,
+        detail: 'A personal check-in message typically re-engages 40% of lapsed givers.'
+      })
+    }
+
+    // Info: event correlation insight
+    alerts.push({
+      type: 'info',
+      title: 'Jummah gives highest per-attendee return',
+      detail: 'Schedule giving reminders for Friday afternoons based on your event data.'
+    })
+
+    return alerts
+  }, [welfareCases, zakatPool, congregation, aggregateStats])
+
   // AI insight
   const aiInsight =
-    '41% of your congregation gives sporadically — less than once per month. A Ramadan consistency challenge could activate this group.'
-
-  // Pool health (overall)
-  const poolHealth = 94
-
-  // -------------------------------------------------------------------------
-  // Computed aggregate stats
-  // -------------------------------------------------------------------------
-  const computeAggregateStats = useCallback(() => {
-    return deriveAggregateStats(congregation)
-  }, [congregation])
-
-  const aggregateStats = useMemo(() => computeAggregateStats(), [computeAggregateStats])
+    '41% of your congregation gives sporadically. A Ramadan consistency challenge could activate this group.'
 
   // -------------------------------------------------------------------------
   // Operations
   // -------------------------------------------------------------------------
 
-  const castVouch = useCallback(
-    (applicantId, decision, note) => {
-      setVouchQueue((prev) => {
-        const item = prev.find((v) => v.id === applicantId)
-        if (!item) return prev
-
-        // Add to history
-        setVouchHistory((hist) => [
-          {
-            id: `vouch-hist-${Date.now()}`,
-            applicantName: item.applicantName,
-            amount: item.amount,
-            purpose: item.purpose,
-            decision,
-            decidedAt: new Date().toISOString(),
-            note: note || ''
-          },
-          ...hist
-        ])
-
-        // Remove from queue
-        return prev.filter((v) => v.id !== applicantId)
+  /** Move a welfare case between status columns */
+  const updateCaseStatus = useCallback((caseId, newStatus) => {
+    setWelfareCases((prev) =>
+      prev.map((c) => {
+        if (c.id !== caseId) return c
+        const updated = { ...c, status: newStatus }
+        if (newStatus === 'in_review' && !c.assignedTo) {
+          updated.assignedTo = null
+        }
+        return updated
       })
-    },
-    []
-  )
+    )
+  }, [])
 
-  const createCircle = useCallback((circleData) => {
-    setCircles((prev) => [
+  /** Resolve a welfare case and log to the welfare ledger */
+  const resolveCase = useCallback((caseId, resolution, amount, notes) => {
+    const resolvedAt = new Date().toISOString()
+
+    setWelfareCases((prev) =>
+      prev.map((c) => {
+        if (c.id !== caseId) return c
+        const submittedDate = new Date(c.submittedAt)
+        const resolvedDate = new Date(resolvedAt)
+        const daysToResolve = Math.max(
+          1,
+          Math.round((resolvedDate - submittedDate) / (1000 * 60 * 60 * 24))
+        )
+        return {
+          ...c,
+          status: 'resolved',
+          resolution,
+          resolvedAt,
+          daysToResolve,
+          notes: notes ? [...(c.notes || []), notes] : c.notes
+        }
+      })
+    )
+
+    // Log to welfare ledger
+    setWelfareLedger((prev) => [
       ...prev,
       {
-        id: circleData.id || `circle-${Date.now()}`,
-        name: circleData.name,
-        type: circleData.type || 'qard-hasan',
-        members: circleData.members || [],
-        monthlyPledge: circleData.monthlyPledge || 0,
-        totalPooled: 0,
-        availableCapital: 0,
-        activeLoans: 0,
-        pendingVotes: 0,
-        poolHistory: [],
-        repaymentRate: null,
-        poolHealthScore: 100,
-        createdAt: new Date().toISOString(),
-        approvalRules: circleData.approvalRules || {
-          quorum: 0.5,
-          approvalThreshold: 0.67,
-          maxLoanPercent: 40
-        },
-        maxLoanPercent: circleData.maxLoanPercent || 40,
-        ...circleData
+        id: `led-${Date.now()}`,
+        caseId,
+        type: resolution.includes('zakat') ? 'zakat' : resolution.includes('sadaqah') ? 'sadaqah' : 'qard_hassan',
+        amount,
+        resolution,
+        resolvedAt
       }
     ])
   }, [])
 
+  /** Log a new event */
   const logEvent = useCallback((eventData) => {
-    setEvents((prev) => [
-      {
-        id: eventData.id || `event-${Date.now()}`,
-        name: eventData.name,
-        date: eventData.date || new Date().toISOString().slice(0, 10),
-        attendees: eventData.attendees || 0,
-        givers: eventData.givers || 0,
-        totalRaised: eventData.totalRaised || 0,
-        correlationMultiplier: eventData.correlationMultiplier || 1.0,
-        type: eventData.type || 'other'
-      },
-      ...prev
-    ])
+    const newEvent = {
+      id: `evt-${Date.now()}`,
+      followupSent: false,
+      ...eventData,
+      createdAt: new Date().toISOString()
+    }
+    setEvents((prev) => [newEvent, ...prev])
   }, [])
 
-  const switchCommunityDemo = useCallback(
-    (demoState) => {
-      if (demoState === 'reset') {
-        const freshMembers = generateCongregation(47)
-        setCongregation(freshMembers)
-        setCircles(buildInitialCircles(freshMembers))
-        setVouchQueue(initialVouchQueue)
-        setVouchHistory(generateVouchHistory())
-        setEvents(initialEvents)
-      }
-    },
-    []
-  )
+  /** Mark an event follow-up as sent */
+  const markFollowupSent = useCallback((eventId) => {
+    setEvents((prev) =>
+      prev.map((e) => (e.id === eventId ? { ...e, followupSent: true } : e))
+    )
+  }, [])
 
-  // -------------------------------------------------------------------------
-  // Backward-compatible "community" object for existing consumers
-  // -------------------------------------------------------------------------
-  const community = useMemo(() => ({
-    name: mosqueIdentity.mosqueName,
-    verified: mosqueIdentity.verified,
-    members: congregation.length,
-    committed: aggregateStats.totalCommitted,
-    familiesHelped: aggregateStats.totalFamiliesHelped,
-    circles: circles.length,
-    monthly: {
-      committed: aggregateStats.monthlyGiving,
-      families: 12,
-      active: aggregateStats.activeGiversThisMonth,
-      total: congregation.length
-    },
-    giving: {
-      direct: aggregateStats.givingBreakdown.direct,
-      compound: aggregateStats.givingBreakdown.compound,
-      jariyah: aggregateStats.givingBreakdown.jariyah,
-      causes: aggregateStats.causeDistribution.map((c) => ({ name: c.name, pct: c.percent })),
-      frequency: aggregateStats.frequencyDistribution
-    },
-    loans: {
-      active: circles.reduce((s, c) => s + c.activeLoans, 0),
-      outstanding: circles.reduce((s, c) => s + (c.totalPooled - c.availableCapital), 0),
-      onSchedule: 2,
-      dueSoon: 1,
-      pendingVote: circles.reduce((s, c) => s + c.pendingVotes, 0),
-      repaymentRate: Math.round(
-        circles.filter((c) => c.repaymentRate !== null).reduce((s, c) => s + c.repaymentRate, 0) /
-          circles.filter((c) => c.repaymentRate !== null).length
-      )
-    },
-    pendingActions: [
-      ...(vouchQueue.length > 0
-        ? [{ type: 'vouch', label: vouchQueue[0].applicantName, severity: 'red' }]
-        : []),
-      ...(circles.some((c) => c.pendingVotes > 0)
-        ? [{ type: 'vote', label: 'Circle vote needs quorum', severity: 'yellow' }]
-        : []),
-      { type: 'info', label: 'New member linked', severity: 'grey' }
-    ]
-  }), [mosqueIdentity, congregation, aggregateStats, circles, vouchQueue])
+  /** Cast a vouch decision */
+  const castVouch = useCallback((applicantId, decision, note) => {
+    setVouchQueue((prev) => {
+      const item = prev.find((v) => v.id === applicantId)
+      if (!item) return prev
+
+      setVouchHistory((hist) => [
+        {
+          id: `vouch-hist-${Date.now()}`,
+          applicantName: item.applicantName,
+          amount: item.amount,
+          purpose: item.purpose,
+          decision,
+          decidedAt: new Date().toISOString(),
+          note: note || ''
+        },
+        ...hist
+      ])
+
+      return prev.filter((v) => v.id !== applicantId)
+    })
+  }, [])
+
+  /** Distribute zakat from the pool to a case */
+  const distributeZakat = useCallback((amount, caseId) => {
+    setZakatPool((prev) => {
+      if (amount > prev.zakatRemaining) return prev
+      return {
+        ...prev,
+        zakatDistributed: prev.zakatDistributed + amount,
+        zakatRemaining: prev.zakatRemaining - amount
+      }
+    })
+
+    // If tied to a case, resolve it
+    if (caseId) {
+      resolveCase(caseId, 'zakat_distributed', amount, `Zakat distribution of $${amount}`)
+    }
+  }, [resolveCase])
 
   // -------------------------------------------------------------------------
   // Context value
   // -------------------------------------------------------------------------
   const value = useMemo(
     () => ({
-      // Backward-compatible community object
-      community,
-
-      // Mosque identity (flat)
+      // Mosque identity
       ...mosqueIdentity,
 
       // Congregation
@@ -569,10 +692,11 @@ export function CommunityProvider({ children }) {
 
       // Aggregate stats
       aggregateStats,
-      computeAggregateStats,
 
-      // Circles
-      circles,
+      // Welfare
+      welfareCases,
+      welfareLedger,
+      zakatPool,
 
       // Vouching
       vouchQueue,
@@ -581,32 +705,38 @@ export function CommunityProvider({ children }) {
       // Events
       events,
 
-      // Insights & health
+      // Insights and health
       aiInsight,
-      poolHealth,
+      congregationHealthScore,
+      givingAlerts,
 
       // Operations
-      castVouch,
-      createCircle,
+      updateCaseStatus,
+      resolveCase,
       logEvent,
-      switchCommunityDemo
+      markFollowupSent,
+      castVouch,
+      distributeZakat
     }),
     [
-      community,
       mosqueIdentity,
       congregation,
       aggregateStats,
-      computeAggregateStats,
-      circles,
+      welfareCases,
+      welfareLedger,
+      zakatPool,
       vouchQueue,
       vouchHistory,
       events,
       aiInsight,
-      poolHealth,
-      castVouch,
-      createCircle,
+      congregationHealthScore,
+      givingAlerts,
+      updateCaseStatus,
+      resolveCase,
       logEvent,
-      switchCommunityDemo
+      markFollowupSent,
+      castVouch,
+      distributeZakat
     ]
   )
 

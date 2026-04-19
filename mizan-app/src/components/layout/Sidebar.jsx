@@ -16,6 +16,7 @@ import {
   UserCog,
   ChevronLeft,
   ArrowRightLeft,
+  Zap,
 } from 'lucide-react'
 import PortfolioContext from '../../context/PortfolioContext'
 import { useApp } from '../../context/AppContext'
@@ -28,6 +29,17 @@ import { useApp } from '../../context/AppContext'
 function usePortfolioSafe() {
   const ctx = useContext(PortfolioContext)
   return ctx // null when no provider wraps us
+}
+
+/* ──────────────────────────────────────────────
+   ACCENT COLORS PER ACCOUNT TYPE
+   ────────────────────────────────────────────── */
+
+const ACCENT_COLORS = {
+  portfolio: { color: 'var(--gold-mid)', glow: 'rgba(212, 168, 67, 0.04)', glowActive: 'rgba(212, 168, 67, 0.10)' },
+  borrower:  { color: 'var(--teal-mid, #4AADA4)', glow: 'rgba(74, 173, 164, 0.04)', glowActive: 'rgba(74, 173, 164, 0.10)' },
+  community: { color: 'var(--teal-light, #7ECDC4)', glow: 'rgba(126, 205, 196, 0.04)', glowActive: 'rgba(126, 205, 196, 0.10)' },
+  ngo:       { color: 'var(--gold-light, #F5D485)', glow: 'rgba(245, 212, 133, 0.04)', glowActive: 'rgba(245, 212, 133, 0.10)' },
 }
 
 /* ──────────────────────────────────────────────
@@ -44,23 +56,174 @@ const NAV_CONFIG = {
     { label: 'Jariyah Vault', icon: Heart, path: '/portfolio/vault' },
   ],
   borrower: [
-    { label: 'Home', icon: Home, path: '/borrower' },
-    { label: 'Payments', icon: CreditCard, path: '/borrower/payments' },
+    { label: 'My Loan', icon: Home, path: '/borrower' },
+    { label: 'Payments', icon: CreditCard, path: '/borrower/payment' },
+    { label: 'History', icon: User, path: '/borrower/history' },
     { label: 'Account', icon: User, path: '/borrower/account' },
   ],
   community: [
     { label: 'Dashboard', icon: Home, path: '/community' },
-    { label: 'Circles', icon: Users, path: '/community/circles' },
+    { label: 'Welfare Cases', icon: Heart, path: '/community/welfare' },
+    { label: 'Events', icon: BarChart3, path: '/community/events' },
     { label: 'Vouching', icon: ShieldCheck, path: '/community/vouching' },
-    { label: 'Insights', icon: BarChart3, path: '/community/insights' },
+    { label: 'Reports', icon: Users, path: '/community/reports' },
   ],
   ngo: [
     { label: 'Dashboard', icon: Home, path: '/ngo' },
     { label: 'Campaigns', icon: Megaphone, path: '/ngo/campaigns' },
     { label: 'Donors', icon: Users, path: '/ngo/donors' },
     { label: 'Insights', icon: BarChart3, path: '/ngo/insights' },
+    { label: 'Automations', icon: Zap, path: '/ngo/automations' },
     { label: 'Account', icon: UserCog, path: '/ngo/account' },
   ],
+}
+
+/* ──────────────────────────────────────────────
+   ISLAMIC GEOMETRIC SVG PATTERN
+   8-pointed star tessellation
+   ────────────────────────────────────────────── */
+
+function IslamicPattern() {
+  return (
+    <svg
+      style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        opacity: 0.025,
+        pointerEvents: 'none',
+        zIndex: 0,
+      }}
+      xmlns="http://www.w3.org/2000/svg"
+      width="100%"
+      height="100%"
+    >
+      <defs>
+        <pattern id="islamic-star" x="0" y="0" width="48" height="48" patternUnits="userSpaceOnUse">
+          {/* 8-pointed star tessellation */}
+          <g fill="none" stroke="currentColor" strokeWidth="0.8">
+            {/* Central octagon */}
+            <polygon points="24,6 34,10 38,20 38,28 34,38 24,42 14,38 10,28 10,20 14,10" />
+            {/* Inner star arms */}
+            <line x1="24" y1="0" x2="24" y2="6" />
+            <line x1="24" y1="42" x2="24" y2="48" />
+            <line x1="0" y1="24" x2="10" y2="24" />
+            <line x1="38" y1="24" x2="48" y2="24" />
+            {/* Diagonal connectors */}
+            <line x1="0" y1="0" x2="14" y2="10" />
+            <line x1="48" y1="0" x2="34" y2="10" />
+            <line x1="0" y1="48" x2="14" y2="38" />
+            <line x1="48" y1="48" x2="34" y2="38" />
+            {/* Inner star shape */}
+            <polygon points="24,14 28,20 24,26 20,20" />
+            <line x1="24" y1="6" x2="20" y2="20" />
+            <line x1="24" y1="6" x2="28" y2="20" />
+            <line x1="24" y1="42" x2="20" y2="28" />
+            <line x1="24" y1="42" x2="28" y2="28" />
+            <line x1="10" y1="24" x2="20" y2="20" />
+            <line x1="10" y1="24" x2="20" y2="28" />
+            <line x1="38" y1="24" x2="28" y2="20" />
+            <line x1="38" y1="24" x2="28" y2="28" />
+            {/* Kite shapes between stars */}
+            <polygon points="20,20 24,14 28,20 24,26" />
+          </g>
+        </pattern>
+      </defs>
+      <rect width="100%" height="100%" fill="url(#islamic-star)" />
+    </svg>
+  )
+}
+
+/* ──────────────────────────────────────────────
+   ACCOUNT SUMMARY CARD
+   Compact glass-style card per account type
+   ────────────────────────────────────────────── */
+
+function AccountSummaryCard({ accountType, portfolio }) {
+  const accent = ACCENT_COLORS[accountType] || ACCENT_COLORS.portfolio
+
+  const cardStyle = {
+    margin: '8px 12px',
+    padding: '10px 12px',
+    background: 'rgba(255, 255, 255, 0.03)',
+    backdropFilter: 'blur(8px)',
+    WebkitBackdropFilter: 'blur(8px)',
+    border: `1px solid rgba(255, 255, 255, 0.06)`,
+    borderRadius: 'var(--radius-sm, 6px)',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 4,
+  }
+
+  const labelStyle = {
+    fontFamily: "'DM Sans', sans-serif",
+    fontSize: 10,
+    color: 'var(--text-tertiary)',
+    textTransform: 'uppercase',
+    letterSpacing: '0.06em',
+    marginBottom: 2,
+  }
+
+  const valueStyle = {
+    fontFamily: "'DM Sans', sans-serif",
+    fontSize: 12,
+    color: 'var(--text-secondary)',
+    lineHeight: 1.4,
+  }
+
+  const accentSpan = (text) => (
+    <span style={{ color: accent.color, fontWeight: 600 }}>{text}</span>
+  )
+
+  if (accountType === 'portfolio') {
+    const available = portfolio?.bankConnected ? `$${(portfolio.bankBalance || 0).toLocaleString()}` : '--'
+    const committed = portfolio?.bankConnected ? `$${(portfolio.committedCapital || 0).toLocaleString()}` : '--'
+    return (
+      <div style={cardStyle}>
+        <span style={labelStyle}>Summary</span>
+        <span style={valueStyle}>
+          {accentSpan(available)} available {' \u00B7 '} {accentSpan(committed)} committed
+        </span>
+      </div>
+    )
+  }
+
+  if (accountType === 'borrower') {
+    return (
+      <div style={cardStyle}>
+        <span style={labelStyle}>Loan Status</span>
+        <span style={valueStyle}>
+          {accentSpan('No active loan')}
+        </span>
+      </div>
+    )
+  }
+
+  if (accountType === 'community') {
+    return (
+      <div style={cardStyle}>
+        <span style={labelStyle}>Community</span>
+        <span style={valueStyle}>
+          Health: {accentSpan('78/100')} {' \u00B7 '} Zakat: {accentSpan('$3,600')} remaining
+        </span>
+      </div>
+    )
+  }
+
+  if (accountType === 'ngo') {
+    return (
+      <div style={cardStyle}>
+        <span style={labelStyle}>Organization</span>
+        <span style={valueStyle}>
+          {accentSpan('$4,200')} available {' \u00B7 '} {accentSpan('$16,500')} pipeline
+        </span>
+      </div>
+    )
+  }
+
+  return null
 }
 
 /* ──────────────────────────────────────────────
@@ -166,12 +329,19 @@ export default function Sidebar({ accountType }) {
 
   const isPortfolio = accountType === 'portfolio'
   const tabs = NAV_CONFIG[accountType] || []
+  const accent = ACCENT_COLORS[accountType] || ACCENT_COLORS.portfolio
 
   const demoUser = appCtx?.demoUser
 
+  // Hover state tracking for nav items
+  const [hoveredTab, setHoveredTab] = useState(null)
+
   return (
     <aside style={styles.sidebar}>
-      {/* ── Branding ── */}
+      {/* ── Islamic geometric pattern background ── */}
+      <IslamicPattern />
+
+      {/* ── Logo zone (64px) ── */}
       <div style={styles.branding}>
         <span style={styles.arabicText}>{'\u0645\u064A\u0632\u0627\u0646'}</span>
         <span style={styles.brandName}>Mizan</span>
@@ -229,11 +399,12 @@ export default function Sidebar({ accountType }) {
         />
       )}
 
-      {/* ── Navigation ── */}
+      {/* ── Navigation zone ── */}
       <nav style={styles.nav}>
         {tabs.map((tab) => {
           const Icon = tab.icon
           const isActive = tab.path && location.pathname === tab.path
+          const isHovered = hoveredTab === tab.label
 
           const handleClick = () => {
             if (tab.action === 'openInvest' && portfolio) {
@@ -247,21 +418,37 @@ export default function Sidebar({ accountType }) {
             <motion.button
               key={tab.label}
               onClick={handleClick}
+              onMouseEnter={() => setHoveredTab(tab.label)}
+              onMouseLeave={() => setHoveredTab(null)}
               style={{
                 ...styles.tab,
-                ...(isActive ? styles.tabActive : styles.tabInactive),
+                height: 36,
+                paddingLeft: 8,
+                borderLeft: isActive ? `3px solid ${accent.color}` : '3px solid transparent',
+                borderRadius: isActive ? '0 var(--radius-sm, 6px) var(--radius-sm, 6px) 0' : 'var(--radius-sm, 6px)',
+                background: isActive
+                  ? accent.glowActive
+                  : isHovered
+                    ? accent.glow
+                    : 'transparent',
+                color: isActive ? accent.color : 'var(--text-secondary)',
+                fontWeight: isActive ? 600 : 400,
+                transition: 'background 0.15s ease, border-color 0.15s ease, color 0.15s ease',
               }}
-              whileHover={{ scale: 1.02 }}
+              whileHover={{ scale: 1.01 }}
               transition={{ type: 'spring', stiffness: 400, damping: 25 }}
             >
-              <Icon size={20} style={{ flexShrink: 0 }} />
+              <Icon size={18} style={{ flexShrink: 0 }} />
               <span>{tab.label}</span>
             </motion.button>
           )
         })}
       </nav>
 
-      {/* ── Bottom section ── */}
+      {/* ── Account summary card ── */}
+      <AccountSummaryCard accountType={accountType} portfolio={portfolio} />
+
+      {/* ── Utility zone (bottom) ── */}
       <div style={styles.bottomSection}>
         {isPortfolio && demoUser && (
           <div style={styles.userInfo}>
@@ -273,12 +460,15 @@ export default function Sidebar({ accountType }) {
         <motion.button
           onClick={() => navigate('/')}
           style={styles.backButton}
-          whileHover={{ scale: 1.02 }}
+          whileHover={{
+            scale: 1.02,
+            backgroundColor: accent.glow,
+          }}
           transition={{ type: 'spring', stiffness: 400, damping: 25 }}
         >
           {isPortfolio ? (
             <>
-              <ArrowRightLeft size={16} style={{ flexShrink: 0 }} />
+              <ArrowRightLeft size={16} style={{ flexShrink: 0, color: accent.color }} />
               <span>Switch Account</span>
             </>
           ) : (
@@ -310,12 +500,21 @@ const styles = {
     flexDirection: 'column',
     zIndex: 100,
     overflowY: 'auto',
+    overflowX: 'hidden',
   },
+
+  /* Logo zone - 64px */
   branding: {
-    padding: '24px 20px 16px',
+    padding: '16px 20px 0',
+    height: 64,
+    minHeight: 64,
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'flex-start',
+    justifyContent: 'center',
+    position: 'relative',
+    zIndex: 1,
+    boxSizing: 'border-box',
   },
   arabicText: {
     fontFamily: "'Amiri', serif",
@@ -335,7 +534,7 @@ const styles = {
     height: 1,
     background: 'var(--gold-mid)',
     opacity: 0.25,
-    marginTop: 16,
+    marginTop: 12,
   },
 
   /* Balance section */
@@ -343,6 +542,8 @@ const styles = {
     padding: '12px 20px 0',
     display: 'flex',
     flexDirection: 'column',
+    position: 'relative',
+    zIndex: 1,
   },
   balanceLabel: {
     fontFamily: "'DM Sans', sans-serif",
@@ -410,6 +611,8 @@ const styles = {
     borderRadius: 'var(--radius-sm, 6px)',
     width: '100%',
     boxSizing: 'border-box',
+    position: 'relative',
+    zIndex: 1,
   },
   streakText: {
     fontFamily: "'DM Sans', sans-serif",
@@ -459,50 +662,42 @@ const styles = {
     textAlign: 'center',
   },
 
-  /* Navigation */
+  /* Navigation zone */
   nav: {
     flex: 1,
     display: 'flex',
     flexDirection: 'column',
     paddingTop: 8,
     overflowY: 'auto',
+    position: 'relative',
+    zIndex: 1,
   },
   tab: {
     display: 'flex',
     alignItems: 'center',
-    gap: 12,
-    padding: '12px 20px',
-    margin: '2px 8px',
-    borderRadius: 'var(--radius-sm)',
+    gap: 10,
+    padding: '0 8px',
+    margin: '1px 8px',
     border: 'none',
-    background: 'transparent',
     cursor: 'pointer',
     fontFamily: "'DM Sans', sans-serif",
-    fontSize: 14,
+    fontSize: 13,
     textAlign: 'left',
     width: 'calc(100% - 16px)',
     boxSizing: 'border-box',
   },
-  tabActive: {
-    background: 'var(--gold-glow)',
-    color: 'var(--gold-mid)',
-    borderLeft: '3px solid var(--gold-mid)',
-    borderRadius: '0 var(--radius-sm) var(--radius-sm) 0',
-    paddingLeft: 17,
-  },
-  tabInactive: {
-    color: 'var(--text-secondary)',
-  },
 
-  /* Bottom section */
+  /* Utility zone (bottom) */
   bottomSection: {
-    padding: '16px 8px',
+    padding: '12px 8px',
     borderTop: '1px solid var(--border-subtle)',
+    position: 'relative',
+    zIndex: 1,
   },
   userInfo: {
     display: 'flex',
     flexDirection: 'column',
-    padding: '0 12px 12px',
+    padding: '0 12px 10px',
   },
   userName: {
     fontFamily: "'DM Sans', sans-serif",
@@ -520,14 +715,16 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
     gap: 8,
-    padding: '10px 12px',
+    padding: '9px 12px',
     background: 'transparent',
-    border: 'none',
+    border: '1px solid var(--border-subtle)',
     cursor: 'pointer',
     fontFamily: "'DM Sans', sans-serif",
     fontSize: 13,
     color: 'var(--text-tertiary)',
     width: '100%',
-    borderRadius: 'var(--radius-sm)',
+    borderRadius: 'var(--radius-sm, 6px)',
+    boxSizing: 'border-box',
+    transition: 'background 0.15s ease, border-color 0.15s ease',
   },
 }

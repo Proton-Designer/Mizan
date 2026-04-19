@@ -4,21 +4,41 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { ArrowRight, Check, CreditCard, Sparkles, MessageCircle } from 'lucide-react'
 import { useBorrower } from '../../context/BorrowerContext'
 
-const SCHEDULED_AMOUNT = 100
-const DUE_DATE = 'May 18, 2026'
-const LOAN_REMAINING = 400
 const CHIP_VALUES = [50, 75, 100, 150]
 
 export default function Payment() {
   const navigate = useNavigate()
   const borrower = useBorrower()
+  const loan = borrower?.activeLoan
 
-  const [selectedChip, setSelectedChip] = useState(100)
+  const [selectedChip, setSelectedChip] = useState(loan?.monthlyPayment || 100)
   const [customMode, setCustomMode] = useState(false)
   const [customValue, setCustomValue] = useState('')
-  const [paymentState, setPaymentState] = useState('idle') // idle | processing | success
-  const [remaining, setRemaining] = useState(LOAN_REMAINING)
+  const [paymentState, setPaymentState] = useState('idle')
+  const [remaining, setRemaining] = useState(loan?.remaining || 0)
 
+  // No active loan — show empty state
+  if (!loan) {
+    return (
+      <div style={{ maxWidth: 640, margin: '0 auto', padding: '80px 24px', textAlign: 'center' }}>
+        <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 28, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 12 }}>
+          No active loan
+        </h2>
+        <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 15, color: 'var(--text-secondary)', marginBottom: 24 }}>
+          You don't have an active loan to make payments on.
+        </p>
+        <button
+          onClick={() => navigate('/borrower')}
+          style={{ padding: '12px 24px', background: 'var(--teal-mid)', color: '#fff', border: 'none', borderRadius: 'var(--radius-md)', fontFamily: "'DM Sans', sans-serif", fontSize: 15, fontWeight: 600, cursor: 'pointer' }}
+        >
+          Back to dashboard
+        </button>
+      </div>
+    )
+  }
+
+  const SCHEDULED_AMOUNT = loan.monthlyPayment || 100
+  const DUE_DATE = loan.schedule?.find(s => s.status === 'due')?.date || 'Next payment'
   const activeAmount = customMode && customValue ? parseFloat(customValue) : selectedChip
   const isValidAmount = activeAmount > 0 && activeAmount <= remaining
   const isExtra = activeAmount > SCHEDULED_AMOUNT

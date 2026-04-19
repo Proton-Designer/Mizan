@@ -10,10 +10,8 @@ import PortfolioJourneyPosition from '../screens/portfolio/JourneyPosition'
 import PortfolioDiscover from '../screens/portfolio/Discover'
 import PortfolioCauseDetail from '../screens/portfolio/CauseDetail'
 import BorrowerRouter from '../screens/borrower/BorrowerRouter'
-import BorrowerIntake from '../screens/borrower/Intake'
-import BorrowerIntakeConfirm from '../screens/borrower/IntakeConfirm'
-import BorrowerIntakeQuick from '../screens/borrower/IntakeQuick'
-import BorrowerVerification from '../screens/borrower/Verification'
+import BorrowerHome from '../screens/borrower/BorrowerHome'
+import BorrowerApply from '../screens/borrower/LoanApplication'
 import BorrowerReview from '../screens/borrower/Review'
 import BorrowerDecision from '../screens/borrower/Decision'
 import BorrowerLoan from '../screens/borrower/Loan'
@@ -27,12 +25,12 @@ import BorrowerHistory from '../screens/borrower/History'
 import BorrowerAccount from '../screens/borrower/Account'
 import CommunityDashboard from '../screens/community/Dashboard'
 import CommunitySetup from '../screens/community/Setup'
-import CommunityCircles from '../screens/community/Circles'
-import CommunityCircleNew from '../screens/community/CircleNew'
-import CommunityCircleDetail from '../screens/community/CircleDetail'
+import CommunityEvents from '../screens/community/Events'
+import CommunityCongregation from '../screens/community/Congregation'
 import CommunityVouching from '../screens/community/Vouching'
+import CommunityWelfareCases from '../screens/community/WelfareCases'
 import CommunityVouchReview from '../screens/community/VouchReview'
-import CommunityInsights from '../screens/community/Insights'
+import CommunityReports from '../screens/community/Reports'
 import NGODashboard from '../screens/ngo/Dashboard'
 import NGOSetup from '../screens/ngo/Setup'
 import NGOCampaigns from '../screens/ngo/Campaigns'
@@ -42,6 +40,7 @@ import NGODonors from '../screens/ngo/Donors'
 import NGOInsights from '../screens/ngo/Insights'
 import NGOAccount from '../screens/ngo/Account'
 import NGOSettlements from '../screens/ngo/Settlements'
+import NGOAutomations from '../screens/ngo/Automations'
 
 export const router = createBrowserRouter([
   {
@@ -67,10 +66,8 @@ export const router = createBrowserRouter([
     element: <AppShell accountType="borrower" />,
     children: [
       { index: true, element: <BorrowerRouter /> },
-      { path: 'intake', element: <BorrowerIntake /> },
-      { path: 'intake/confirm', element: <BorrowerIntakeConfirm /> },
-      { path: 'intake/quick', element: <BorrowerIntakeQuick /> },
-      { path: 'verification', element: <BorrowerVerification /> },
+      { path: 'home', element: <BorrowerHome /> },
+      { path: 'apply', element: <BorrowerApply /> },
       { path: 'review', element: <BorrowerReview /> },
       { path: 'decision', element: <BorrowerDecision /> },
       { path: 'loan', element: <BorrowerLoan /> },
@@ -90,12 +87,12 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <CommunityDashboard /> },
       { path: 'setup', element: <CommunitySetup /> },
-      { path: 'circles', element: <CommunityCircles /> },
-      { path: 'circles/new', element: <CommunityCircleNew /> },
-      { path: 'circles/:circleId', element: <CommunityCircleDetail /> },
+      { path: 'welfare', element: <CommunityWelfareCases /> },
+      { path: 'events', element: <CommunityEvents /> },
+      { path: 'congregation', element: <CommunityCongregation /> },
       { path: 'vouching', element: <CommunityVouching /> },
       { path: 'vouching/:applicantId', element: <CommunityVouchReview /> },
-      { path: 'insights', element: <CommunityInsights /> },
+      { path: 'reports', element: <CommunityReports /> },
     ]
   },
   {
@@ -111,6 +108,7 @@ export const router = createBrowserRouter([
       { path: 'insights', element: <NGOInsights /> },
       { path: 'account', element: <NGOAccount /> },
       { path: 'settlements', element: <NGOSettlements /> },
+      { path: 'automations', element: <NGOAutomations /> },
     ]
   }
 ])

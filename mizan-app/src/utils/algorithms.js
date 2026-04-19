@@ -349,16 +349,266 @@ export function assignTier(amount) {
 export function computeFeasibility(income, debts, loanAmount, tier, householdSize) {
   const monthlyPayment = loanAmount / tier.expectedMonths;
   const monthlyIncome = income / 12;
-  const discretionaryIncome = monthlyIncome - debts - (householdSize * 500);
+  // $200/person/month baseline living cost (realistic for low-income households)
+  const discretionaryIncome = monthlyIncome - debts - (householdSize * 200);
   const utilizationPercent =
     discretionaryIncome > 0
       ? Math.round((monthlyPayment / discretionaryIncome) * 100)
       : 100;
+
+  // Compute the maximum feasible loan amount
+  const maxMonthlyPayment = Math.max(0, discretionaryIncome * 0.8);
+  const maxFeasibleAmount = Math.floor(maxMonthlyPayment * tier.expectedMonths);
 
   return {
     feasible: discretionaryIncome > monthlyPayment,
     monthlyPayment,
     discretionaryIncome,
     utilizationPercent,
+    maxFeasibleAmount,
   };
+}
+
+// ---------------------------------------------------------------------------
+// 7. computeVouchScore
+// ---------------------------------------------------------------------------
+/**
+ * Compute trust/vouch score from community standing.
+ *
+ * @param {boolean} imamVouched - Whether imam has vouched
+ * @param {string} mosqueTenure - 'long' | 'medium' | 'short' | 'none'
+ * @param {boolean} circleMember - Whether borrower is in a qard hassan circle
+ * @returns {number} 0-25 trust score
+ */
+export function computeVouchScore(imamVouched, mosqueTenure, circleMember) {
+  let score = 0;
+  // Imam vouch: up to 15 points
+  if (imamVouched) score += 15;
+  // Mosque tenure: up to 10 points
+  const tenurePoints = { long: 10, medium: 6, short: 3, none: 0 };
+  score += tenurePoints[mosqueTenure] || 0;
+  // Circle membership: bonus 5 points (can exceed 25 for strong cases)
+  if (circleMember) score += 5;
+  return Math.min(30, score); // cap at 30 but threshold checks use 25 scale
+}
+
+// ---------------------------------------------------------------------------
+// 8. simulateCircleVote
+// ---------------------------------------------------------------------------
+/**
+ * Deterministic circle vote simulation based on application strength.
+ * Same inputs always produce the same vote outcome.
+ */
+export function simulateCircleVote(needScore, vouchScore, tier) {
+  const circleSize = tier.name === 'Micro' ? 8 : tier.name === 'Standard' ? 12 : 15;
+
+  // Base yes probability from need score
+  const baseProbability = needScore / 100;
+  // Trust score adjustment
+  const trustAdjustment = (vouchScore / 25) * 0.2;
+  const yesProbability = Math.min(0.95, baseProbability + trustAdjustment);
+
+  // Deterministic vote count using score as seed
+  const seed = Math.round(needScore * 100 + vouchScore);
+  const jitter = 0.85 + (seed % 30) / 100;
+  const yesVotes = Math.min(circleSize, Math.max(0, Math.round(circleSize * yesProbability * jitter)));
+  const noVotes = circleSize - yesVotes;
+
+  const threshold = tier.name === 'Major' ? 0.66 : 0.51;
+  const passed = circleSize > 0 && (yesVotes / circleSize) >= threshold;
+
+  return {
+    passed,
+    yesVotes,
+    noVotes,
+    circleSize,
+    percentage: circleSize > 0 ? Math.round((yesVotes / circleSize) * 100) : 0,
+    threshold: Math.round(threshold * 100),
+  };
+}
+
+// ---------------------------------------------------------------------------
+// 9. computeDecision
+// ---------------------------------------------------------------------------
+/**
+ * Deterministic loan decision engine.
+ * Uses real computed scores to produce realistic outcomes.
+ *
+ * @param {object} application - The submitted application object
+ * @returns {object} Decision object with outcome, scores, and reasoning
+ */
+export function computeDecision(application) {
+  const tier = assignTier(application.loanAmount || 500);
+  const vouchScore = computeVouchScore(
+    application.imamVouched || false,
+    application.mosqueTenure || 'none',
+    application.circleMember || false
+  );
+
+  const { score: needScore, breakdown: needBreakdown } = computeNeedScore(
+    application.grossMonthlyIncome || 0,
+    application.householdSize || 1,
+    application.purposeCategory || 'other',
+    application.dependents || 0,
+    vouchScore / 25 // normalize to 0-1 for the algorithm
+  );
+
+  const feasibility = computeFeasibility(
+    (application.grossMonthlyIncome || 0) * 12, // annualize
+    application.monthlyDebts || 0,
+    application.loanAmount || 500,
+    tier,
+    application.householdSize || 1
+  );
+
+  // Score thresholds per tier
+  const scoreThreshold = tier.name === 'Micro' ? 40 : tier.name === 'Standard' ? 50 : 60;
+  const trustThreshold = tier.name === 'Micro' ? 10 : tier.name === 'Standard' ? 18 : 22;
+
+  // Hard deny: feasibility impossible
+  if (!feasibility.feasible && (feasibility.maxFeasibleAmount || 0) < 50) {
+    return {
+      outcome: 'denied',
+      reason: 'income_insufficient',
+      needScore: Math.round(needScore),
+      needBreakdown,
+      vouchScore,
+      feasibility,
+      tier,
+      denialMessage: 'Based on your income and expenses, any loan repayment would leave your household below the minimum needed for basic living costs. We cannot offer a loan that creates more hardship.',
+      suggestions: buildSuggestions(needScore, vouchScore, feasibility, application, scoreThreshold, trustThreshold),
+    };
+  }
+
+  // Reduced amount: feasible only at lower amount
+  if (!feasibility.feasible && (feasibility.maxFeasibleAmount || 0) >= 50) {
+    const offeredAmount = Math.floor((feasibility.maxFeasibleAmount || 0) / 50) * 50;
+    return {
+      outcome: 'reduced',
+      reason: 'partial_feasibility',
+      offeredAmount,
+      monthlyPayment: Math.ceil(offeredAmount / tier.expectedMonths),
+      needScore: Math.round(needScore),
+      needBreakdown,
+      vouchScore,
+      feasibility,
+      tier,
+      reductionReason: `$${application.loanAmount} over ${tier.expectedMonths} months would leave your household of ${application.householdSize} below the minimum needed for basic expenses. We can offer $${offeredAmount} — keeping your monthly payment manageable.`,
+    };
+  }
+
+  const meetsScore = needScore >= scoreThreshold;
+  const meetsTrust = vouchScore >= trustThreshold;
+
+  // Strong application: approve directly
+  if (meetsScore && meetsTrust && needScore >= 65) {
+    return {
+      outcome: 'approved',
+      approvedAmount: application.loanAmount,
+      monthlyPayment: Math.ceil(application.loanAmount / tier.expectedMonths),
+      needScore: Math.round(needScore),
+      needBreakdown,
+      vouchScore,
+      feasibility,
+      tier,
+      approvalPath: 'direct',
+    };
+  }
+
+  // Meets score but not trust: circle vote decides
+  if (meetsScore && !meetsTrust) {
+    const voteResult = simulateCircleVote(needScore, vouchScore, tier);
+    if (voteResult.passed) {
+      return {
+        outcome: 'approved',
+        approvedAmount: application.loanAmount,
+        monthlyPayment: Math.ceil(application.loanAmount / tier.expectedMonths),
+        needScore: Math.round(needScore),
+        needBreakdown,
+        vouchScore,
+        feasibility,
+        tier,
+        approvalPath: 'circle_vote',
+        voteResult,
+      };
+    } else {
+      const reducedAmount = Math.floor(application.loanAmount * 0.7 / 50) * 50;
+      return {
+        outcome: 'reduced',
+        reason: 'circle_vote_reduced',
+        offeredAmount: reducedAmount,
+        monthlyPayment: Math.ceil(reducedAmount / tier.expectedMonths),
+        needScore: Math.round(needScore),
+        needBreakdown,
+        vouchScore,
+        feasibility,
+        tier,
+        voteResult,
+        reductionReason: 'The circle voted to fund a reduced amount given the early stage of your community standing. As your trust score grows, future applications can unlock the full amount.',
+      };
+    }
+  }
+
+  // Borderline: meets trust but not score
+  if (!meetsScore && meetsTrust) {
+    const voteResult = simulateCircleVote(needScore, vouchScore, tier);
+    if (voteResult.passed) {
+      const reducedAmount = Math.floor(application.loanAmount * 0.75 / 50) * 50;
+      return {
+        outcome: 'reduced',
+        reason: 'borderline_approved',
+        offeredAmount: reducedAmount,
+        monthlyPayment: Math.ceil(reducedAmount / tier.expectedMonths),
+        needScore: Math.round(needScore),
+        needBreakdown,
+        vouchScore,
+        feasibility,
+        tier,
+        voteResult,
+        reductionReason: `Your community standing is strong, but the need score was just below the threshold. The circle approved a reduced amount of $${reducedAmount} as a first step.`,
+      };
+    }
+  }
+
+  // Below threshold: deny with dignity
+  return {
+    outcome: 'denied',
+    reason: 'below_threshold',
+    needScore: Math.round(needScore),
+    needBreakdown,
+    vouchScore,
+    feasibility,
+    tier,
+    denialMessage: "Your application didn't meet the threshold for this loan tier right now. This is based purely on the algorithm — not a judgment of your character.",
+    suggestions: buildSuggestions(needScore, vouchScore, feasibility, application, scoreThreshold, trustThreshold),
+  };
+}
+
+function buildSuggestions(needScore, vouchScore, feasibility, application, scoreThreshold, trustThreshold) {
+  const suggestions = [];
+  if (vouchScore < trustThreshold) {
+    suggestions.push({
+      title: 'Get an imam vouch',
+      detail: `Adds up to 15 trust points. Your current trust score is ${vouchScore} — the threshold is ${trustThreshold}.`,
+    });
+  }
+  if (needScore < scoreThreshold) {
+    suggestions.push({
+      title: 'Higher urgency needs score higher',
+      detail: 'Medical, rent, and transportation needs score 20-25 urgency points. Planning-ahead requests score lower.',
+    });
+  }
+  if (!feasibility.feasible && feasibility.maxFeasibleAmount > 50) {
+    suggestions.push({
+      title: `Request a smaller amount`,
+      detail: `$${feasibility.maxFeasibleAmount} would be feasible on your current income instead of $${application.loanAmount}.`,
+    });
+  }
+  if (!application.mosqueTenure || application.mosqueTenure === 'none' || application.mosqueTenure === 'short') {
+    suggestions.push({
+      title: 'Establish mosque connection',
+      detail: '2+ years of mosque tenure adds 10 trust points. Even 6 months adds 6 points.',
+    });
+  }
+  return suggestions;
 }

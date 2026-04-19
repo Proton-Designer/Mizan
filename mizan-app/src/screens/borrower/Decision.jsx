@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Heart, ExternalLink, MessageSquare } from 'lucide-react'
+import ConfettiExplosion from 'react-confetti-explosion'
 import { useBorrower } from '../../context/BorrowerContext'
 
 /* ─── Teal palette (from CSS vars + direct) ─── */
@@ -138,11 +139,14 @@ function buildSchedule(amount, months) {
 }
 
 /* ─── OUTCOME A: Approved ─── */
-function ApprovedOutcome({ amount = 500, navigate, setApplicationStage }) {
+function ApprovedOutcome({ amount = 500, navigate, setApplicationStage, decision = {} }) {
+  const { setActiveLoan, receiveDisbursement, submittedApplication, checkingBalance } = useBorrower()
   const [animDone, setAnimDone] = useState(false)
-  const [bankState, setBankState] = useState('idle') // idle → connecting → connected → deposited
-  const months = 5
-  const monthly = amount / months
+  const [showConfetti, setShowConfetti] = useState(true)
+  const [bankState, setBankState] = useState('idle')
+  const tierMonths = decision.tier?.expectedMonths || 5
+  const months = tierMonths
+  const monthly = Math.ceil(amount / months)
   const schedule = buildSchedule(amount, months)
 
   const handleLinkBank = () => {
@@ -151,17 +155,59 @@ function ApprovedOutcome({ amount = 500, navigate, setApplicationStage }) {
       setBankState('connected')
       setTimeout(() => {
         setBankState('deposited')
+        // Deposit funds into checking account
+        receiveDisbursement(amount)
       }, 500)
     }, 700)
   }
 
   const handleEnterDashboard = () => {
+    // Create the active loan object
+    const now = new Date()
+    const loanSchedule = Array.from({ length: months }, (_, i) => {
+      const date = new Date(now)
+      date.setMonth(date.getMonth() + i)
+      return {
+        date: date.toISOString().slice(0, 10),
+        amount: monthly,
+        status: i === 0 ? 'due' : 'upcoming',
+      }
+    })
+
+    const newLoan = {
+      id: `loan-${Date.now()}`,
+      amount,
+      remaining: amount,
+      monthlyPayment: monthly,
+      tier: decision.tier?.name || 'Standard',
+      purpose: submittedApplication?.purpose || 'Loan',
+      purposeCategory: submittedApplication?.purposeCategory || 'other',
+      startDate: now.toISOString().slice(0, 10),
+      destinationCause: 'Yemen Orphan Fund',
+      destinationNgo: 'Islamic Relief USA',
+      schedule: loanSchedule,
+      redeploymentStories: [
+        'a student in Chicago covering tuition — $300 loan',
+        'a family in Phoenix for utility bills — $200 loan',
+        'a worker in Detroit for car repair — $450 loan',
+        'a single parent in Minneapolis for rent — $800 loan',
+        `Your final payment completes your loan. Your full $${amount} has cycled through ${months} families. JazakAllahu Khayran.`,
+      ],
+      currentRedeploymentIndex: 0,
+      paymentsCompleted: 0,
+      status: 'active',
+      needScore: decision.needScore,
+      vouchScore: decision.vouchScore,
+    }
+
+    setActiveLoan(newLoan)
     setApplicationStage('active_loan')
     navigate('/borrower/loan')
   }
 
   return (
     <div style={pageWrap}>
+      {showConfetti && <ConfettiExplosion duration={2500} particleCount={80} colors={['#D4A843', '#4AADA4', '#F5D485', '#7ECDC4']} onComplete={() => setShowConfetti(false)} />}
       {/* Hero card with teal radial glow */}
       <div style={{
         background: `radial-gradient(ellipse at center, ${TEAL_GLOW} 0%, transparent 70%)`,
@@ -393,22 +439,50 @@ function ApprovedOutcome({ amount = 500, navigate, setApplicationStage }) {
 }
 
 /* ─── OUTCOME B: Reduced ─── */
-function ReducedOutcome({ requestedAmount = 500, offeredAmount = 350, navigate, setApplicationStage }) {
+function ReducedOutcome({ requestedAmount = 500, offeredAmount = 350, navigate, setApplicationStage, decision = {} }) {
+  const { setActiveLoan, receiveDisbursement, submittedApplication } = useBorrower()
   const [showDialog, setShowDialog] = useState(false)
   const [bankState, setBankState] = useState('idle')
   const [accepted, setAccepted] = useState(false)
-  const months = Math.round(offeredAmount / 70) || 5
-  const monthly = offeredAmount / months
+  const tierMonths = decision.tier?.expectedMonths || 5
+  const months = tierMonths
+  const monthly = Math.ceil(offeredAmount / months)
 
   const handleAccept = () => {
     setAccepted(true)
-    // Trigger same bank flow as approved but with reduced amount
     setTimeout(() => setBankState('connecting'), 100)
-    setTimeout(() => setBankState('connected'), 800)
-    setTimeout(() => setBankState('deposited'), 1300)
+    setTimeout(() => {
+      setBankState('connected')
+      setTimeout(() => {
+        setBankState('deposited')
+        receiveDisbursement(offeredAmount)
+      }, 500)
+    }, 700)
   }
 
   const handleEnterDashboard = () => {
+    const now = new Date()
+    const loanSchedule = Array.from({ length: months }, (_, i) => {
+      const date = new Date(now)
+      date.setMonth(date.getMonth() + i)
+      return { date: date.toISOString().slice(0, 10), amount: monthly, status: i === 0 ? 'due' : 'upcoming' }
+    })
+    setActiveLoan({
+      id: `loan-${Date.now()}`, amount: offeredAmount, remaining: offeredAmount,
+      monthlyPayment: monthly, tier: decision.tier?.name || 'Standard',
+      purpose: submittedApplication?.purpose || 'Loan',
+      purposeCategory: submittedApplication?.purposeCategory || 'other',
+      startDate: now.toISOString().slice(0, 10),
+      destinationCause: 'Yemen Orphan Fund', destinationNgo: 'Islamic Relief USA',
+      schedule: loanSchedule,
+      redeploymentStories: [
+        'a student in Chicago covering tuition — $300 loan',
+        'a family in Phoenix for utility bills — $200 loan',
+        'a worker in Detroit for car repair — $450 loan',
+      ],
+      currentRedeploymentIndex: 0, paymentsCompleted: 0, status: 'active',
+      needScore: decision.needScore, vouchScore: decision.vouchScore,
+    })
     setApplicationStage('active_loan')
     navigate('/borrower/loan')
   }
@@ -700,7 +774,7 @@ function ReducedOutcome({ requestedAmount = 500, offeredAmount = 350, navigate, 
 }
 
 /* ─── OUTCOME C: Denied ─── */
-function DeniedOutcome() {
+function DeniedOutcome({ decision = {}, mosqueName }) {
   const resources = [
     {
       name: 'Islamic Relief USA Emergency Fund',
@@ -708,7 +782,7 @@ function DeniedOutcome() {
       url: 'https://irusa.org',
     },
     {
-      name: 'East Austin Masjid Zakat Committee',
+      name: `${mosqueName || 'Your Local Mosque'} Zakat Committee`,
       description: 'Your local mosque community may be able to assist with zakat-eligible needs.',
       url: null,
     },
@@ -718,6 +792,8 @@ function DeniedOutcome() {
       url: null,
     },
   ]
+
+  const suggestions = decision.suggestions || []
 
   return (
     <div style={{ ...pageWrap, maxWidth: 600 }}>
@@ -844,6 +920,70 @@ function DeniedOutcome() {
           You can reapply in 90 days.
         </div>
 
+        {/* What would change my outcome? */}
+        {suggestions.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.8 }}
+            style={{ marginBottom: 32 }}
+          >
+            <h3 style={{ fontFamily: serif, fontSize: 20, fontWeight: 500, color: 'var(--text-primary)', marginBottom: 12 }}>
+              What would change my outcome?
+            </h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {suggestions.map((s, i) => (
+                <div key={i} style={{
+                  padding: '12px 16px',
+                  background: 'rgba(74,173,164,0.06)',
+                  border: '1px solid rgba(74,173,164,0.2)',
+                  borderRadius: 12,
+                  borderLeft: `3px solid ${TEAL}`,
+                }}>
+                  <div style={{ fontFamily: sans, fontSize: 14, fontWeight: 600, color: TEAL, marginBottom: 4 }}>
+                    {s.title}
+                  </div>
+                  <div style={{ fontFamily: sans, fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                    {s.detail}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
+        {/* Algorithm scores (if available) */}
+        {decision.needScore != null && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.85 }}
+            style={{
+              padding: '12px 16px', marginBottom: 32,
+              background: 'var(--bg-elevated)', borderRadius: 10,
+              border: '1px solid var(--border-subtle)',
+            }}
+          >
+            <div style={{ fontFamily: sans, fontSize: 11, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
+              Your algorithm scores
+            </div>
+            <div style={{ display: 'flex', gap: 16 }}>
+              <div>
+                <div style={{ fontFamily: sans, fontSize: 12, color: 'var(--text-tertiary)' }}>Need Score</div>
+                <div style={{ fontFamily: serif, fontSize: 20, fontWeight: 600, color: decision.needScore >= 50 ? TEAL : '#F87171' }}>
+                  {decision.needScore}/100
+                </div>
+              </div>
+              <div>
+                <div style={{ fontFamily: sans, fontSize: 12, color: 'var(--text-tertiary)' }}>Trust Score</div>
+                <div style={{ fontFamily: serif, fontSize: 20, fontWeight: 600, color: decision.vouchScore >= 18 ? TEAL : '#F87171' }}>
+                  {decision.vouchScore}/25
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
         {/* Closing dua */}
         <motion.div
           initial={{ opacity: 0 }}
@@ -884,28 +1024,34 @@ function DetailItem({ label, value, valueColor }) {
 
 /* ─── Main Decision Screen ─── */
 export default function Decision() {
-  const { demoState, setApplicationStage } = useBorrower()
+  const { decisionOutcome, computedDecision, setApplicationStage, submittedApplication, receiveDisbursement, setActiveLoan, activeLoan } = useBorrower()
   const navigate = useNavigate()
 
-  const decisionOutcome = demoState // maps context state to spec terminology
+  const decision = computedDecision || {}
+  const app = submittedApplication || {}
 
   if (decisionOutcome === 'approved') {
     return <ApprovedOutcome
-      amount={500}
+      amount={decision.approvedAmount || app.loanAmount || 500}
       navigate={navigate}
       setApplicationStage={setApplicationStage}
+      decision={decision}
     />
   }
 
   if (decisionOutcome === 'reduced') {
     return <ReducedOutcome
-      requestedAmount={500}
-      offeredAmount={350}
+      requestedAmount={app.loanAmount || 500}
+      offeredAmount={decision.offeredAmount || 350}
       navigate={navigate}
       setApplicationStage={setApplicationStage}
+      decision={decision}
     />
   }
 
   // Default: denied
-  return <DeniedOutcome />
+  return <DeniedOutcome
+    decision={decision}
+    mosqueName={app.mosqueName}
+  />
 }

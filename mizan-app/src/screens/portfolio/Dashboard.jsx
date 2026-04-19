@@ -200,8 +200,15 @@ function HeroCard({ card, index }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.08, duration: 0.4 }}
       style={{
-        background: 'var(--bg-surface)',
-        border: '1px solid var(--border-subtle)',
+        background: 'rgba(22, 22, 31, 0.6)',
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
+        border: card.isGold
+          ? '1px solid rgba(212, 168, 67, 0.12)'
+          : '1px solid rgba(240, 237, 232, 0.06)',
+        boxShadow: card.isGold
+          ? '0 4px 24px rgba(0, 0, 0, 0.3), 0 0 40px rgba(212, 168, 67, 0.04)'
+          : '0 4px 24px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.04)',
         borderRadius: 'var(--radius-lg)',
         padding: '20px',
       }}
@@ -323,7 +330,7 @@ function PerformanceChart() {
   }, [dataPoints])
 
   return (
-    <Card>
+    <Card variant="glass" style={{ border: '1px solid rgba(240, 237, 232, 0.08)' }}>
       {/* Header */}
       <div
         style={{
@@ -536,7 +543,7 @@ function DonutChart({ positions }) {
   ]
 
   return (
-    <Card>
+    <Card variant="glass" style={{ border: '1px solid rgba(240, 237, 232, 0.08)' }}>
       <h3 style={{
         fontFamily: "'Cormorant Garamond', serif", fontSize: '20px', fontWeight: 600,
         color: 'var(--text-primary)', margin: '0 0 12px 0',
@@ -746,7 +753,7 @@ function HoldingCard({ position, getNgoById, ngoLoading, onClick }) {
 
   return (
     <motion.div
-      whileHover={{ scale: 1.01 }}
+      whileHover={{ y: -2, boxShadow: '0 8px 32px rgba(0,0,0,0.4)' }}
       whileTap={{ scale: 0.99 }}
       onClick={onClick}
       style={{
@@ -755,7 +762,7 @@ function HoldingCard({ position, getNgoById, ngoLoading, onClick }) {
         borderRadius: 'var(--radius-lg)',
         padding: '20px',
         cursor: 'pointer',
-        transition: 'border-color 0.2s',
+        transition: 'transform 200ms ease, box-shadow 200ms ease',
       }}
       onMouseEnter={(e) => (e.currentTarget.style.borderColor = 'var(--border-default)')}
       onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'var(--border-subtle)')}
@@ -1287,6 +1294,7 @@ export default function PortfolioDashboard() {
     totalDeployed,
     totalFamiliesHelped,
     vaultPersons,
+    streakCount,
   } = usePortfolio()
 
   const { ngoDatabase, ngoLoading, getNgoById } = useNGO()
@@ -1299,8 +1307,16 @@ export default function PortfolioDashboard() {
         padding: '24px 20px 40px',
         maxWidth: '1200px',
         margin: '0 auto',
+        position: 'relative',
       }}
     >
+      {/* Gold gradient mesh */}
+      <div style={{
+        position: 'absolute', top: 0, left: 0, right: 0, height: 400,
+        background: 'radial-gradient(ellipse 60% 50% at 50% 0%, rgba(212, 168, 67, 0.08) 0%, transparent 70%)',
+        pointerEvents: 'none', zIndex: 0,
+      }} />
+
       {/* ── Pulse keyframe (injected once) ── */}
       <style>{`
         @keyframes pulse {
@@ -1340,6 +1356,33 @@ export default function PortfolioDashboard() {
 
       {/* Section 6: AI Reflection Card */}
       <AIReflectionCard />
+
+      {/* Bottom stats strip */}
+      <div style={{
+        display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 1,
+        background: 'var(--border-subtle)', borderRadius: 'var(--radius-lg)',
+        overflow: 'hidden', marginTop: 24,
+      }}>
+        {[
+          { label: 'JARIYAH ACTIVE', value: positions.filter(p => p.mode === 'jariyah').length },
+          { label: 'FAMILIES HELPED', value: totalFamiliesHelped },
+          { label: 'MEALS FUNDED', value: Math.round(totalFamiliesHelped * 2.3) },
+          { label: 'ACTIVE POSITIONS', value: positions.filter(p => p.status === 'active').length },
+          { label: 'COMPOUND CYCLING', value: positions.filter(p => p.type === 'compound' && p.status === 'active').length },
+          { label: 'DAYS STREAK', value: streakCount || 23 },
+        ].map((stat, i) => (
+          <div key={i} style={{
+            background: 'var(--bg-surface)', padding: '16px 12px', textAlign: 'center',
+          }}>
+            <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 10, fontWeight: 500, letterSpacing: '0.08em', color: 'var(--text-tertiary)', marginBottom: 6 }}>
+              {stat.label}
+            </div>
+            <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, fontWeight: 600, color: i === 0 ? 'var(--status-green)' : 'var(--text-primary)' }}>
+              {stat.value}
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }

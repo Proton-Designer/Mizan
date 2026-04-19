@@ -364,6 +364,9 @@ export function PortfolioProvider({ children }) {
   const [investModalOpen, setInvestModalOpen] = useState(false)
   const [investPreselectedNgo, setInvestPreselectedNgo] = useState(null)
 
+  /* ── Recurring buys ── */
+  const [recurringBuys, setRecurringBuys] = useState([])
+
   /* ── Reflection ── */
   const [reflectionData, setReflectionData] = useState(null)
 
@@ -554,6 +557,101 @@ export function PortfolioProvider({ children }) {
     },
     [logTransaction]
   )
+
+  /* ──────────────────────────────────────────
+     RECURRING BUYS
+     ────────────────────────────────────────── */
+
+  const createRecurringBuy = useCallback(
+    (config) => {
+      const id = `rec-${Date.now()}`
+      const recurring = {
+        id,
+        ngoId: config.ngoId,
+        ngoName: config.ngoName,
+        amount: config.amount,
+        frequency: config.frequency, // 'weekly' | 'biweekly' | 'monthly'
+        investType: config.investType, // 'direct' | 'compound'
+        cycles: config.cycles,
+        splitPercent: config.splitPercent,
+        startDate: new Date().toISOString(),
+        endDate: config.endDate || null, // null = indefinite
+        totalExecutions: config.totalExecutions || null, // e.g. 12 for 12 months
+        executionCount: 0,
+        nextExecution: new Date().toISOString(),
+        status: 'active', // 'active' | 'paused' | 'completed'
+        createdAt: new Date().toISOString(),
+      }
+      setRecurringBuys((prev) => [...prev, recurring])
+
+      // Execute the first buy immediately
+      let result
+      const ngo = { id: config.ngoId, name: config.ngoName, category: config.category || 'community', impactPerDollar: config.impactPerDollar || 2, impactUnit: config.impactUnit || 'families' }
+      if (config.investType === 'direct') {
+        result = investDirect(config.amount, ngo)
+      } else {
+        result = investCompound(config.amount, ngo, config.cycles, config.splitPercent)
+      }
+
+      if (result?.success) {
+        // Mark first execution
+        setRecurringBuys((prev) =>
+          prev.map((r) => r.id === id ? { ...r, executionCount: 1, lastExecuted: new Date().toISOString() } : r)
+        )
+      }
+
+      return { success: true, recurringId: id, firstBuyResult: result }
+    },
+    [investDirect, investCompound]
+  )
+
+  const pauseRecurringBuy = useCallback((id) => {
+    setRecurringBuys((prev) =>
+      prev.map((r) => r.id === id ? { ...r, status: 'paused' } : r)
+    )
+  }, [])
+
+  const resumeRecurringBuy = useCallback((id) => {
+    setRecurringBuys((prev) =>
+      prev.map((r) => r.id === id ? { ...r, status: 'active' } : r)
+    )
+  }, [])
+
+  const cancelRecurringBuy = useCallback((id) => {
+    setRecurringBuys((prev) => prev.filter((r) => r.id !== id))
+  }, [])
+
+  // Simulate recurring execution (check on mount if any are due)
+  useEffect(() => {
+    if (recurringBuys.length === 0) return
+    const now = Date.now()
+    const FREQ_MS = { weekly: 7 * 86400000, biweekly: 14 * 86400000, monthly: 30 * 86400000 }
+
+    recurringBuys.forEach((rec) => {
+      if (rec.status !== 'active') return
+      if (rec.totalExecutions && rec.executionCount >= rec.totalExecutions) {
+        setRecurringBuys((prev) =>
+          prev.map((r) => r.id === rec.id ? { ...r, status: 'completed' } : r)
+        )
+        return
+      }
+      const lastExec = new Date(rec.lastExecuted || rec.createdAt).getTime()
+      const interval = FREQ_MS[rec.frequency] || FREQ_MS.monthly
+      if (now - lastExec >= interval) {
+        // Due for execution — simulate it
+        const ngo = { id: rec.ngoId, name: rec.ngoName, category: 'community', impactPerDollar: 2, impactUnit: 'families' }
+        if (rec.investType === 'direct') {
+          investDirect(rec.amount, ngo)
+        } else {
+          investCompound(rec.amount, ngo, rec.cycles, rec.splitPercent)
+        }
+        setRecurringBuys((prev) =>
+          prev.map((r) => r.id === rec.id ? { ...r, executionCount: r.executionCount + 1, lastExecuted: new Date().toISOString() } : r)
+        )
+      }
+    })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // Run once on mount
 
   /* ──────────────────────────────────────────
      HELPER ACTIONS
@@ -771,6 +869,13 @@ export function PortfolioProvider({ children }) {
       processReturn,
       addFunds,
 
+      // Recurring buys
+      recurringBuys,
+      createRecurringBuy,
+      pauseRecurringBuy,
+      resumeRecurringBuy,
+      cancelRecurringBuy,
+
       // Helpers
       incrementStreak,
       openInvest,
@@ -804,6 +909,11 @@ export function PortfolioProvider({ children }) {
       investCompound,
       processReturn,
       addFunds,
+      recurringBuys,
+      createRecurringBuy,
+      pauseRecurringBuy,
+      resumeRecurringBuy,
+      cancelRecurringBuy,
       incrementStreak,
       openInvest,
       closeInvest,

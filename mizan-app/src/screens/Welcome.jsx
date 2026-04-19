@@ -106,6 +106,16 @@ export default function Welcome() {
             marginBottom: '48px',
           }}
         >
+          <div style={{
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            border: '1px solid rgba(255, 255, 255, 0.06)',
+            borderRadius: '16px',
+            padding: '32px 48px',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+          }}>
           <p style={{
             fontFamily: "'Amiri', serif",
             fontSize: '16px',
@@ -154,6 +164,7 @@ export default function Welcome() {
               boxShadow: '0 0 8px rgba(212, 168, 67, 0.3)',
             }}
           />
+          </div>
         </motion.div>
 
         {/* Context copy */}

@@ -1,7 +1,7 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Check, ChevronDown, Clock, FileText, Play } from 'lucide-react'
+import { Check, CheckCircle, XCircle, ChevronDown, Clock, FileText, Play } from 'lucide-react'
 import { useBorrower } from '../../context/BorrowerContext'
 import Card from '../../components/ui/Card'
 import TransitionWrapper from '../../components/shared/TransitionWrapper'
@@ -10,11 +10,11 @@ import TransitionWrapper from '../../components/shared/TransitionWrapper'
 // Step tracker data
 // ---------------------------------------------------------------------------
 const INITIAL_STEPS = [
-  { label: 'Application submitted', detail: 'Your request has been recorded', state: 'complete' },
-  { label: 'Community vouch', detail: 'Sheikh Abdullah notified', state: 'pending' },
-  { label: 'Need score analysis', detail: 'Evaluating financial need', state: 'waiting' },
-  { label: 'Fund matching', detail: 'Matching with available pool', state: 'waiting' },
-  { label: 'Final decision', detail: 'Preparing decision...', state: 'waiting' },
+  { label: 'Application received', detail: 'Your application is in our hands.', state: 'complete' },
+  { label: 'Community verification', detail: 'Confirming your mosque connection.', state: 'pending' },
+  { label: 'Need assessment', detail: 'Reviewing your situation and household needs.', state: 'waiting' },
+  { label: 'Pool availability', detail: 'Checking available funds in your tier.', state: 'waiting' },
+  { label: 'Decision ready', detail: 'Your outcome is being prepared.', state: 'waiting' },
 ]
 
 // ---------------------------------------------------------------------------
@@ -89,7 +89,7 @@ function ConnectorLine({ fromState, toState }) {
 // ---------------------------------------------------------------------------
 export default function Review() {
   const navigate = useNavigate()
-  const { submittedApplication, switchDemoState } = useBorrower()
+  const { submittedApplication, pendingDecision, setDecisionOutcome, setComputedDecision, setOfferedAmount, setApplicationStage, switchDemoState } = useBorrower()
 
   const app = submittedApplication || {}
 
@@ -97,44 +97,61 @@ export default function Review() {
   const [simulating, setSimulating] = useState(false)
   const [transparencyOpen, setTransparencyOpen] = useState(false)
 
-  // --- Sequential simulation ---
-  const simulateVouch = useCallback(async () => {
-    if (simulating) return
-    setSimulating(true)
+  // Auto-start simulation on mount (using ref to prevent double-run)
+  const hasStarted = { current: false }
 
-    // Step 2 complete, step 3 pending
-    setSteps(prev => prev.map((s, i) => {
-      if (i === 1) return { ...s, state: 'complete', detail: 'Vouch confirmed' }
-      if (i === 2) return { ...s, state: 'pending', detail: 'Running need score analysis...' }
-      return s
-    }))
+  useEffect(() => {
+    if (hasStarted.current) return
+    hasStarted.current = true
 
-    await new Promise(r => setTimeout(r, 1000))
+    const run = async () => {
+      setSimulating(true)
 
-    // Step 3 complete, step 4 pending
-    setSteps(prev => prev.map((s, i) => {
-      if (i === 2) return { ...s, state: 'complete', detail: 'Score: 72/100' }
-      if (i === 3) return { ...s, state: 'pending', detail: 'Matching with community pool...' }
-      return s
-    }))
+      // Step 1 already complete. Step 2 → complete, step 3 → pending
+      await new Promise(r => setTimeout(r, 800))
+      setSteps(prev => prev.map((s, i) => {
+        if (i === 1) return { ...s, state: 'complete', detail: 'Mosque connection confirmed.' }
+        if (i === 2) return { ...s, state: 'pending', detail: 'Assessing your household needs...' }
+        return s
+      }))
 
-    await new Promise(r => setTimeout(r, 1000))
+      await new Promise(r => setTimeout(r, 1200))
+      setSteps(prev => prev.map((s, i) => {
+        if (i === 2) return { ...s, state: 'complete', detail: `Need score: ${pendingDecision?.needScore || '—'}/100` }
+        if (i === 3) return { ...s, state: 'pending', detail: 'Checking funds in your tier...' }
+        return s
+      }))
 
-    // Step 4 complete, step 5 pending
-    setSteps(prev => prev.map((s, i) => {
-      if (i === 3) return { ...s, state: 'complete', detail: 'Funds available' }
-      if (i === 4) return { ...s, state: 'pending', detail: 'Preparing decision...' }
-      return s
-    }))
+      await new Promise(r => setTimeout(r, 1000))
+      setSteps(prev => prev.map((s, i) => {
+        if (i === 3) return { ...s, state: 'complete', detail: 'Funds available in pool.' }
+        if (i === 4) return { ...s, state: 'pending', detail: 'Preparing your outcome...' }
+        return s
+      }))
 
-    await new Promise(r => setTimeout(r, 1000))
+      await new Promise(r => setTimeout(r, 1000))
+      setSteps(prev => prev.map(s => ({ ...s, state: 'complete' })))
 
-    // All complete
-    setSteps(prev => prev.map(s => ({ ...s, state: 'complete' })))
+      await new Promise(r => setTimeout(r, 600))
 
-    await new Promise(r => setTimeout(r, 500))
-    navigate('/borrower/decision')
-  }, [simulating, navigate])
+      // Apply the pending decision
+      if (pendingDecision) {
+        setDecisionOutcome(pendingDecision.outcome)
+        setComputedDecision(pendingDecision)
+        if (pendingDecision.offeredAmount) setOfferedAmount(pendingDecision.offeredAmount)
+      } else {
+        switchDemoState('approved')
+      }
+      setApplicationStage('decided')
+      navigate('/borrower/decision')
+    }
+
+    run()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // no-op placeholder
+  const runSimulation = null
 
   // --- Demo state handlers ---
   const handleDemoNav = (state, route) => {
@@ -219,32 +236,33 @@ export default function Review() {
           </div>
         </Card>
 
-        {/* ================================================================ */}
-        {/* Simulate vouch button                                           */}
-        {/* ================================================================ */}
-        <motion.button
-          whileHover={{ scale: 1.01 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={simulateVouch}
-          disabled={simulating}
-          style={{
-            width: '100%',
-            height: 52,
-            borderRadius: 'var(--radius-pill)',
+        {/* Processing indicator */}
+        {simulating && (
+          <div style={{
+            padding: '16px 20px',
+            background: 'var(--teal-glow)',
             border: '1px solid var(--teal-deep)',
-            background: simulating ? 'var(--bg-overlay)' : 'var(--teal-glow)',
-            color: simulating ? 'var(--text-tertiary)' : 'var(--teal-light)',
-            fontFamily: "'DM Sans', sans-serif",
-            fontSize: 15, fontWeight: 500,
-            cursor: simulating ? 'not-allowed' : 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-            marginBottom: 24,
-            transition: 'var(--transition-base)',
-          }}
-        >
-          <Play size={16} fill={simulating ? 'var(--text-tertiary)' : 'var(--teal-light)'} />
-          {simulating ? 'Simulating...' : 'Demo: Simulate vouch response'}
-        </motion.button>
+            borderRadius: 'var(--radius-lg)',
+            marginBottom: 16,
+            display: 'flex', alignItems: 'center', gap: 12,
+          }}>
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
+              style={{ flexShrink: 0 }}
+            >
+              <Clock size={18} color="var(--teal-light)" />
+            </motion.div>
+            <div>
+              <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, fontWeight: 600, color: 'var(--teal-light)', margin: 0 }}>
+                Processing your application...
+              </p>
+              <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>
+                Your outcome is being determined by the algorithm
+              </p>
+            </div>
+          </div>
+        )}
 
         {/* ================================================================ */}
         {/* Estimated Timeline                                              */}
@@ -259,9 +277,9 @@ export default function Review() {
             Estimated Timeline
           </p>
           {[
-            { label: 'Community vouch', time: '24-48 hours' },
-            { label: 'Review & scoring', time: '1-2 business days' },
-            { label: 'Decision & disbursement', time: '2-3 business days' },
+            { label: 'Community verification', time: '24-48 hours' },
+            { label: 'Need assessment', time: 'Automatic (minutes)' },
+            { label: 'Decision ready', time: 'Within 48 hours of verification' },
           ].map((item, i) => (
             <div key={i} style={{
               display: 'flex', alignItems: 'center', gap: 14,

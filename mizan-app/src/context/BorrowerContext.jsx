@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useMemo } from 'react'
-import { computeNeedScore, assignTier, computeFeasibility } from '../utils/algorithms'
+import { computeNeedScore, assignTier, computeFeasibility, computeDecision } from '../utils/algorithms'
 
 // ---------------------------------------------------------------------------
 // Seed Data
@@ -94,7 +94,7 @@ const BorrowerContext = createContext(null)
 
 export function BorrowerProvider({ children }) {
   // ---- Application flow ----
-  const [applicationStage, setApplicationStage] = useState('review') // demo default
+  const [applicationStage, setApplicationStage] = useState(null) // null = no active application
   const [draftApplication, setDraftApplication] = useState({})
   const [extractedData, setExtractedData] = useState(null)
   const [submittedApplication, setSubmittedApplication] = useState(SEED_APPLICATION)
@@ -104,6 +104,7 @@ export function BorrowerProvider({ children }) {
   const [decisionOutcome, setDecisionOutcome] = useState(null) // 'approved'|'reduced'|'denied'
   const [offeredAmount, setOfferedAmount] = useState(350)
   const [decisionReason, setDecisionReason] = useState('')
+  const [computedDecision, setComputedDecision] = useState(null) // full decision object from computeDecision()
 
   // ---- Loan ----
   const [activeLoan, setActiveLoan] = useState(null)
@@ -122,6 +123,15 @@ export function BorrowerProvider({ children }) {
   const [extensionGranted, setExtensionGranted] = useState(false)
   const [conversionPending, setConversionPending] = useState(false)
   const [conversionConfirmed, setConversionConfirmed] = useState(false)
+
+  // ---- Loan Draft (persisted to localStorage) ----
+  const [loanDraft, setLoanDraft] = useState(() => {
+    try {
+      const saved = localStorage.getItem('mizan_loan_draft')
+      return saved ? JSON.parse(saved) : null
+    } catch { return null }
+  })
+  const [pendingDecision, setPendingDecision] = useState(null)
 
   // -----------------------------------------------------------------------
   // Helpers
@@ -250,31 +260,124 @@ export function BorrowerProvider({ children }) {
   // Demo Switcher
   // -----------------------------------------------------------------------
 
+  // Run the real decision algorithm against application data
+  const runDecisionAlgorithm = useCallback((applicationOverrides = {}) => {
+    const app = { ...submittedApplication, ...applicationOverrides }
+    const decision = computeDecision(app)
+    setComputedDecision(decision)
+    setDecisionOutcome(decision.outcome)
+    if (decision.offeredAmount) setOfferedAmount(decision.offeredAmount)
+    setDecisionReason(decision.denialMessage || decision.reductionReason || '')
+    return decision
+  }, [submittedApplication])
+
+  // ---- Loan Draft Operations ----
+  const INITIAL_DRAFT = {
+    purposeCategory: 'car_repair', purposeDetail: 'Engine repair needed for daily commute to work', urgency: 'high',
+    loanAmount: 500, repaymentFrequency: 'monthly', repaymentStart: 'as_soon',
+    proposedMonthlyPayment: 100, grossMonthlyIncome: 2000,
+    rentAmount: 950, utilitiesAmount: 250, otherExpenses: 0,
+    householdSize: 3, dependents: 2, employmentStatus: 'Employed full-time',
+    fullName: 'Omar Al-Rashid', firstName: 'Omar', lastName: 'Al-Rashid',
+    dateOfBirth: '07/15/1994', address: '2400 Nueces St, Austin, TX 78705',
+    phoneNumber: '(512) 555-8847', phoneVerified: true,
+    governmentId: 'TX-28471956',
+    mosqueName: 'UT Austin MSA, Austin, TX', mosqueTenure: 'long',
+    imamName: 'Sheikh Abdullah', imamPhone: '(512) 555-0192',
+    circleMember: false, currentStep: 1,
+  }
+
+  const updateDraft = useCallback((fields) => {
+    setLoanDraft(prev => {
+      const updated = { ...(prev || INITIAL_DRAFT), ...fields }
+      try { localStorage.setItem('mizan_loan_draft', JSON.stringify(updated)) } catch {}
+      return updated
+    })
+  }, [])
+
+  const clearDraft = useCallback(() => {
+    localStorage.removeItem('mizan_loan_draft')
+    setLoanDraft(null)
+  }, [])
+
+  const startNewApplication = useCallback(() => {
+    setLoanDraft({ ...INITIAL_DRAFT })
+    try { localStorage.setItem('mizan_loan_draft', JSON.stringify(INITIAL_DRAFT)) } catch {}
+  }, [])
+
+  const draftMonthlyExpenses = useMemo(() =>
+    (loanDraft?.rentAmount || 0) + (loanDraft?.utilitiesAmount || 0) + (loanDraft?.otherExpenses || 0),
+    [loanDraft?.rentAmount, loanDraft?.utilitiesAmount, loanDraft?.otherExpenses]
+  )
+
   const switchDemoState = useCallback((state) => {
     switch (state) {
-      case 'approved':
-        setDecisionOutcome('approved')
+      case 'approved': {
+        // Strong case: imam vouched, good income, high urgency
+        const decision = runDecisionAlgorithm({
+          imamVouched: true,
+          mosqueTenure: 'long',
+          grossMonthlyIncome: 2000,
+          monthlyDebts: 1200,
+          householdSize: 3,
+          dependents: 2,
+          purposeCategory: 'car_repair',
+          loanAmount: 500,
+        })
         setApplicationStage('decided')
         break
-      case 'reduced':
-        setDecisionOutcome('reduced')
-        setOfferedAmount(350)
+      }
+      case 'reduced': {
+        // Borderline: higher amount requested than budget allows
+        const decision = runDecisionAlgorithm({
+          imamVouched: true,
+          mosqueTenure: 'long',
+          grossMonthlyIncome: 2200,
+          monthlyDebts: 1400,
+          householdSize: 3,
+          dependents: 2,
+          purposeCategory: 'car_repair',
+          loanAmount: 1500,
+        })
+        // Force reduced if algorithm didn't produce it
+        if (decision.outcome !== 'reduced') {
+          setDecisionOutcome('reduced')
+          setOfferedAmount(decision.offeredAmount || 350)
+          setComputedDecision({ ...decision, outcome: 'reduced', offeredAmount: decision.offeredAmount || 350, reductionReason: decision.reductionReason || `$1,800 over ${decision.tier?.expectedMonths || 5} months would strain your budget. We can offer $${decision.offeredAmount || 350} to keep payments manageable.` })
+        }
         setApplicationStage('decided')
         break
-      case 'denied':
-        setDecisionOutcome('denied')
+      }
+      case 'denied': {
+        // Weak case: low income, high debts, no mosque connection
+        const decision = runDecisionAlgorithm({
+          imamVouched: false,
+          mosqueTenure: 'none',
+          grossMonthlyIncome: 800,
+          monthlyDebts: 700,
+          householdSize: 1,
+          dependents: 0,
+          purposeCategory: 'other',
+          loanAmount: 500,
+        })
+        // Force denied if algorithm didn't produce it
+        if (decision.outcome !== 'denied') {
+          setDecisionOutcome('denied')
+          setComputedDecision({ ...decision, outcome: 'denied', denialMessage: "Based on your current income and expenses, a loan would create more hardship than it resolves. This is the algorithm's assessment — not a judgment of your character." })
+        }
         setApplicationStage('decided')
         break
+      }
       case 'active_loan':
         setApplicationStage('active_loan')
         setActiveLoan({ ...SEED_ACTIVE_LOAN })
-        setCheckingBalance(1347) // after disbursement
+        setCheckingBalance(1347)
         setBankLinked(true)
         break
       default:
         break
     }
-  }, [])
+  }, [runDecisionAlgorithm])
 
   // -----------------------------------------------------------------------
   // Provider Value
@@ -296,9 +399,12 @@ export function BorrowerProvider({ children }) {
     // Decision
     decisionOutcome,
     setDecisionOutcome,
+    computedDecision,
+    setComputedDecision,
     offeredAmount,
     setOfferedAmount,
     decisionReason,
+    runDecisionAlgorithm,
     setDecisionReason,
 
     // Loan
@@ -336,6 +442,15 @@ export function BorrowerProvider({ children }) {
     initiateConversion,
     logBorrowerTransaction,
 
+    // Loan draft
+    loanDraft,
+    updateDraft,
+    clearDraft,
+    startNewApplication,
+    draftMonthlyExpenses,
+    pendingDecision,
+    setPendingDecision,
+
     // Demo
     switchDemoState,
 
@@ -371,6 +486,12 @@ export function BorrowerProvider({ children }) {
     requestRestructure,
     initiateConversion,
     logBorrowerTransaction,
+    loanDraft,
+    updateDraft,
+    clearDraft,
+    startNewApplication,
+    draftMonthlyExpenses,
+    pendingDecision,
     switchDemoState,
   ])
 

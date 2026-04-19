@@ -671,6 +671,26 @@ export function NGOPartnerProvider({ children }) {
   const [pendingActions, setPendingActions] = useState(INITIAL_PENDING_ACTIONS)
   const [abTests, setAbTests] = useState(INITIAL_AB_TESTS)
 
+  // Automation data
+  const [acknowledgmentQueue] = useState([
+    { id: 'ack-1', donorName: 'Ahmad K.', city: 'Austin TX', amount: 300, mode: 'compound', campaign: 'Yemen Orphan Fund', hoursAgo: 2, cycleNumber: 2, totalCycles: 3, isJariyah: false, acknowledged: false },
+    { id: 'ack-2', donorName: '[Anonymous]', city: 'Houston TX', amount: 200, mode: 'direct', campaign: 'Gaza Emergency', hoursAgo: 6, isJariyah: false, acknowledged: false },
+    { id: 'ack-3', donorName: 'Fatima M.', city: 'Dallas TX', amount: 500, mode: 'compound', campaign: 'Orphan Care', hoursAgo: 24, isJariyah: true, acknowledged: false },
+  ])
+
+  const [failedPayments] = useState([
+    { id: 'fp-1', donorName: 'Ahmad K.', monthlyAmount: 60, campaign: 'Yemen Orphan Fund', failureReason: 'Card declined', daysSinceFailure: 3, recoveryAttempts: 1, status: 'in_progress' },
+    { id: 'fp-2', donorName: 'Fatima M.', monthlyAmount: 80, campaign: 'Somalia Water Wells', failureReason: 'Card expired', daysSinceFailure: 5, recoveryAttempts: 0, status: 'pending' },
+    { id: 'fp-3', donorName: '[Anonymous]', monthlyAmount: 40, campaign: 'Somalia Water Wells', failureReason: 'Insufficient funds', daysSinceFailure: 1, recoveryAttempts: 1, status: 'recovered' },
+  ])
+
+  const [islamicCalendarEvents] = useState([
+    { id: 'ice-1', name: 'Dhul Hijjah', daysAway: 23, historicalMultiplier: 2.1, optimalOutreachDays: 18 },
+    { id: 'ice-2', name: 'Eid Al-Adha', daysAway: 33, historicalMultiplier: 1.8, optimalOutreachDays: 28 },
+    { id: 'ice-3', name: 'Muharram', daysAway: 54, historicalMultiplier: 1.3, optimalOutreachDays: 49 },
+    { id: 'ice-4', name: 'Ramadan', daysAway: 320, historicalMultiplier: 4.2, optimalOutreachDays: 310 },
+  ])
+
   // ---- donor segments (computed) ----
   const donorSegments = useMemo(() => {
     const segments = { jariyah: [], repeat: [], lapsed: [], compound: [], firstTime: [] }
@@ -888,6 +908,9 @@ export function NGOPartnerProvider({ children }) {
       donorSegments,
       pendingActions,
       abTests,
+      acknowledgmentQueue,
+      failedPayments,
+      islamicCalendarEvents,
       // operations
       completeOnboarding,
       createCampaign,
@@ -907,6 +930,9 @@ export function NGOPartnerProvider({ children }) {
       donorSegments,
       pendingActions,
       abTests,
+      acknowledgmentQueue,
+      failedPayments,
+      islamicCalendarEvents,
       completeOnboarding,
       createCampaign,
       postImpactUpdate,

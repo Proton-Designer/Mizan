@@ -212,6 +212,7 @@ export default function InvestModal() {
     incrementStreak,
     setReflectionData,
     tagPositionToVault,
+    createRecurringBuy,
   } = usePortfolio()
 
   const { ngoDatabase, getNgoById, searchNgos } = useNGO()
@@ -230,6 +231,9 @@ export default function InvestModal() {
   const [searchQuery, setSearchQuery] = useState('')
   const [newVaultName, setNewVaultName] = useState('')
   const [showAddVault, setShowAddVault] = useState(false)
+  const [isRecurring, setIsRecurring] = useState(false)
+  const [recurringFrequency, setRecurringFrequency] = useState('monthly')
+  const [recurringDuration, setRecurringDuration] = useState(12) // number of executions
 
   const amountNum = useMemo(() => {
     const n = parseFloat(amount)
@@ -250,6 +254,10 @@ export default function InvestModal() {
       s.push('type')                                // Step: Direct / Compound
     }
     s.push('amount')                                // Step: Amount
+    // Recurring setup step (after amount, if toggled)
+    if (isRecurring) {
+      s.push('recurring')                           // Step: Recurring frequency & duration
+    }
     // Compound-only: combined pool analysis + cycles + split
     if (investType === 'compound') {
       s.push('compound_details')                    // Step: Pool Analysis + Cycles + Split
@@ -257,7 +265,7 @@ export default function InvestModal() {
     s.push('vault')                                 // Step: Vault Tag
     s.push('confirm')                               // Step: Confirm
     return s
-  }, [skipCauseSelection, investType])
+  }, [skipCauseSelection, investType, isRecurring])
 
   const currentStepName = steps[step] || 'cause'
   const totalSteps = steps.length
@@ -277,6 +285,9 @@ export default function InvestModal() {
       setSearchQuery('')
       setNewVaultName('')
       setShowAddVault(false)
+      setIsRecurring(false)
+      setRecurringFrequency('monthly')
+      setRecurringDuration(12)
 
       if (investPreselectedNgo) {
         const ngo = getNgoById(investPreselectedNgo)
@@ -287,13 +298,11 @@ export default function InvestModal() {
     }
   }, [investModalOpen, investPreselectedNgo, getNgoById])
 
-  /* ── Pre-select invest type based on urgency when NGO is chosen ── */
+  /* ── Default invest type to compound when a cause is selected ── */
   useEffect(() => {
     if (selectedNgo && investType === null) {
-      if (selectedNgo.urgencyScore > 0.7) {
-        setInvestType('direct')
-      }
-      // Don't auto-select compound — let user choose between compound and jariyah
+      setInvestType('compound')
+      setCycles(1)
     }
   }, [selectedNgo, investType])
 
@@ -348,6 +357,8 @@ export default function InvestModal() {
         return investType === 'direct' || investType === 'compound'
       case 'amount':
         return amountNum > 0 && amountNum <= bankBalance
+      case 'recurring':
+        return recurringFrequency && recurringDuration > 0
       case 'compound_details':
         return !isComputing && !!algorithmResult
       case 'vault':
@@ -364,10 +375,28 @@ export default function InvestModal() {
     if (amountNum <= 0 || amountNum > bankBalance) return
 
     let result
-    if (investType === 'direct') {
+
+    if (isRecurring) {
+      // Create recurring buy — first payment executes immediately
+      const config = {
+        ngoId: selectedNgo?.id || 'jariyah-pool',
+        ngoName: selectedNgo?.name || 'Qard Hassan Pool (Jariyah)',
+        amount: amountNum,
+        frequency: recurringFrequency,
+        investType: investType === 'jariyah' ? 'compound' : investType,
+        cycles: investType === 'jariyah' ? null : cycles,
+        splitPercent: investType === 'jariyah' ? 100 : splitPercent,
+        totalExecutions: recurringDuration || null, // 0 = indefinite = null
+        category: selectedNgo?.category || 'community',
+        impactPerDollar: selectedNgo?.impactPerDollar || 2,
+        impactUnit: selectedNgo?.impactUnit || 'families',
+      }
+      const recurResult = createRecurringBuy(config)
+      result = recurResult?.firstBuyResult
+    } else if (investType === 'direct') {
       result = investDirect(amountNum, selectedNgo)
     } else if (investType === 'jariyah') {
-      result = investCompound(amountNum, selectedNgo, null, 100) // null cycles = perpetual
+      result = investCompound(amountNum, selectedNgo, null, 100)
     } else {
       result = investCompound(amountNum, selectedNgo, cycles, splitPercent)
     }
@@ -424,6 +453,10 @@ export default function InvestModal() {
     setReflectionData,
     vaultPersons,
     closeInvest,
+    isRecurring,
+    recurringFrequency,
+    recurringDuration,
+    createRecurringBuy,
   ])
 
   /* ── Filtered NGO list for cause selection ── */
@@ -558,8 +591,34 @@ export default function InvestModal() {
                 exit="exit"
                 transition={{ duration: 0.25, ease: 'easeInOut' }}
               >
-                <h2 style={styles.heading}>Choose a Cause</h2>
-                <p style={styles.subtext}>Where would you like your giving to go?</p>
+                {/* Header row with recurring toggle */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--space-sm)' }}>
+                  <h2 style={{ ...styles.heading, margin: 0 }}>Choose a Cause</h2>
+                  <button
+                    onClick={() => setIsRecurring(!isRecurring)}
+                    style={{
+                      padding: '5px 12px',
+                      background: isRecurring ? 'rgba(212, 168, 67, 0.12)' : 'var(--bg-elevated)',
+                      border: isRecurring ? '1px solid var(--gold-mid)' : '1px solid var(--border-subtle)',
+                      borderRadius: 'var(--radius-pill)',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      transition: 'all 200ms',
+                    }}
+                  >
+                    <RefreshCw size={12} color={isRecurring ? 'var(--gold-mid)' : 'var(--text-tertiary)'} />
+                    <span style={{
+                      fontFamily: "'DM Sans', sans-serif", fontSize: 12, fontWeight: 500,
+                      color: isRecurring ? 'var(--text-gold)' : 'var(--text-secondary)',
+                    }}>
+                      {isRecurring ? 'Recurring on' : 'Recurring'}
+                    </span>
+                    {isRecurring && <Check size={10} color="var(--gold-mid)" />}
+                  </button>
+                </div>
+                <p style={{ ...styles.subtext, marginTop: 0 }}>Where would you like your giving to go?</p>
 
                 {/* Search */}
                 <div style={{ position: 'relative', marginBottom: 'var(--space-md)' }}>
@@ -932,6 +991,112 @@ export default function InvestModal() {
                     )
                   })}
                 </div>
+              </motion.div>
+            )}
+
+            {/* ─────────────────────────────────────
+               STEP: RECURRING SETUP
+               ───────────────────────────────────── */}
+            {currentStepName === 'recurring' && (
+              <motion.div
+                key="recurring"
+                custom={direction}
+                variants={stepVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{ duration: 0.25, ease: 'easeInOut' }}
+              >
+                <h2 style={styles.heading}>Recurring Schedule</h2>
+                <p style={styles.subtext}>Set up automatic giving on your schedule</p>
+
+                {/* Frequency */}
+                <div style={{ marginTop: 'var(--space-xl)' }}>
+                  <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: 'var(--text-secondary)', marginBottom: 'var(--space-sm)' }}>
+                    How often?
+                  </p>
+                  <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
+                    {[
+                      { key: 'weekly', label: 'Weekly', desc: 'Every 7 days' },
+                      { key: 'biweekly', label: 'Bi-weekly', desc: 'Every 14 days' },
+                      { key: 'monthly', label: 'Monthly', desc: 'Every 30 days' },
+                    ].map((f) => (
+                      <button
+                        key={f.key}
+                        onClick={() => setRecurringFrequency(f.key)}
+                        style={{
+                          flex: 1, padding: '14px 8px', borderRadius: 'var(--radius-md)',
+                          background: recurringFrequency === f.key ? 'var(--gold-glow-strong)' : 'var(--bg-elevated)',
+                          border: recurringFrequency === f.key ? '2px solid var(--gold-mid)' : '1px solid var(--border-subtle)',
+                          cursor: 'pointer', textAlign: 'center',
+                        }}
+                      >
+                        <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, fontWeight: 600, display: 'block', color: recurringFrequency === f.key ? 'var(--text-gold)' : 'var(--text-primary)' }}>
+                          {f.label}
+                        </span>
+                        <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: 'var(--text-tertiary)', display: 'block', marginTop: 2 }}>
+                          {f.desc}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Duration */}
+                <div style={{ marginTop: 'var(--space-xl)' }}>
+                  <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: 'var(--text-secondary)', marginBottom: 'var(--space-sm)' }}>
+                    For how long?
+                  </p>
+                  <div style={{ display: 'flex', gap: 'var(--space-sm)', flexWrap: 'wrap' }}>
+                    {[
+                      { value: 4, label: '1 month' },
+                      { value: 12, label: '3 months' },
+                      { value: 26, label: '6 months' },
+                      { value: 52, label: '1 year' },
+                      { value: 0, label: 'Indefinite' },
+                    ].map((d) => (
+                      <button
+                        key={d.value}
+                        onClick={() => setRecurringDuration(d.value)}
+                        style={{
+                          padding: '8px 16px', borderRadius: 'var(--radius-pill)',
+                          background: recurringDuration === d.value ? 'var(--gold-glow-strong)' : 'var(--bg-elevated)',
+                          border: recurringDuration === d.value ? '1px solid var(--gold-mid)' : '1px solid var(--border-subtle)',
+                          color: recurringDuration === d.value ? 'var(--text-gold)' : 'var(--text-secondary)',
+                          fontFamily: "'DM Sans', sans-serif", fontSize: 13, fontWeight: 500, cursor: 'pointer',
+                        }}
+                      >
+                        {d.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Summary */}
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  style={{
+                    marginTop: 'var(--space-xl)', padding: 'var(--space-lg)',
+                    background: 'var(--bg-elevated)', border: '1px solid var(--border-default)',
+                    borderRadius: 'var(--radius-lg)',
+                  }}
+                >
+                  <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: 'var(--text-tertiary)', margin: '0 0 8px 0', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                    Recurring summary
+                  </p>
+                  <p style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 22, fontWeight: 600, color: 'var(--text-gold)', margin: '0 0 4px 0' }}>
+                    {fmtDollars(amountNum)} / {recurringFrequency === 'weekly' ? 'week' : recurringFrequency === 'biweekly' ? '2 weeks' : 'month'}
+                  </p>
+                  <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: 'var(--text-secondary)', margin: 0 }}>
+                    {recurringDuration === 0
+                      ? 'Runs indefinitely until you cancel'
+                      : `${recurringDuration} payments · Total: ${fmtDollars(amountNum * recurringDuration)}`}
+                  </p>
+                  <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: 'var(--text-tertiary)', margin: '8px 0 0 0' }}>
+                    First payment today · {fmtDollars(amountNum)} deducted now
+                  </p>
+                </motion.div>
               </motion.div>
             )}
 
@@ -1338,6 +1503,25 @@ export default function InvestModal() {
                   </div>
                 </div>
 
+                {/* Recurring info */}
+                {isRecurring && (
+                  <div style={{
+                    marginTop: 'var(--space-md)', padding: '12px 16px',
+                    background: 'rgba(212, 168, 67, 0.06)', border: '1px solid var(--border-gold)',
+                    borderRadius: 'var(--radius-md)', display: 'flex', alignItems: 'center', gap: '10px',
+                  }}>
+                    <RefreshCw size={16} color="var(--gold-mid)" />
+                    <div>
+                      <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, fontWeight: 600, color: 'var(--text-gold)', margin: 0 }}>
+                        Recurring: {fmtDollars(amountNum)} / {recurringFrequency === 'weekly' ? 'week' : recurringFrequency === 'biweekly' ? '2 weeks' : 'month'}
+                      </p>
+                      <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: 'var(--text-tertiary)', margin: '2px 0 0 0' }}>
+                        {recurringDuration === 0 ? 'Indefinite — cancel anytime' : `${recurringDuration} payments · Total: ${fmtDollars(amountNum * recurringDuration)}`}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
                 {/* Commit button */}
                 <motion.button
                   whileHover={{ scale: 1.02 }}
@@ -1363,7 +1547,7 @@ export default function InvestModal() {
                     gap: 'var(--space-sm)',
                   }}
                 >
-                  Commit {fmtDollars(amountNum)}
+                  {isRecurring ? `Start recurring ${fmtDollars(amountNum)}/mo` : `Commit ${fmtDollars(amountNum)}`}
                   <ArrowRight size={18} />
                 </motion.button>
               </motion.div>

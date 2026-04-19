@@ -4,50 +4,39 @@ import { motion } from 'framer-motion'
 import { CheckCircle, Clock, Circle, ArrowRight, Star, CreditCard, Heart } from 'lucide-react'
 import { useBorrower } from '../../context/BorrowerContext'
 
-const activeLoan = {
-  amount: 500,
-  remaining: 400,
-  monthlyPayment: 100,
-  tier: 'Standard',
-  paymentsCompleted: 1,
-  totalPayments: 5,
-  nextDueDate: 'May 18, 2026',
-  daysUntilDue: 12,
-  schedule: [
-    { month: 'January 2026', amount: 100, status: 'paid', paidDate: 'Jan 15, 2026' },
-    { month: 'February 2026', amount: 100, status: 'paid', paidDate: null },
-    { month: 'March 2026', amount: 100, status: 'paid', paidDate: null },
-    { month: 'April 2026', amount: 100, status: 'due', paidDate: null },
-    { month: 'May 2026', amount: 100, status: 'upcoming', paidDate: null },
-  ],
-  redeploymentStories: [
-    {
-      title: 'Your $100 April repayment has already been redeployed to help Amira, a single mother in Dearborn, cover her utility bills this month.',
-    },
-    {
-      title: 'Your $100 March repayment helped fund a $300 emergency loan for a student facing eviction in Minneapolis.',
-    },
-    {
-      title: 'Your $100 February repayment was pooled with others to help a family in Houston pay for urgent car repairs.',
-    },
-  ],
-}
-
-// Fix schedule to match spec: 1 paid, 1 due, 3 upcoming
-const loanSchedule = [
-  { month: 'April 2026', amount: 100, status: 'paid', paidDate: 'Apr 6, 2026' },
-  { month: 'May 2026', amount: 100, status: 'due', paidDate: null },
-  { month: 'June 2026', amount: 100, status: 'upcoming', paidDate: null },
-  { month: 'July 2026', amount: 100, status: 'upcoming', paidDate: null },
-  { month: 'August 2026', amount: 100, status: 'upcoming', paidDate: null },
+const DEFAULT_REDEPLOYMENT_STORIES = [
+  { title: 'Your repayment has already been redeployed to help Amira, a single mother in Dearborn, cover her utility bills this month.' },
+  { title: 'Your repayment helped fund a $300 emergency loan for a student facing eviction in Minneapolis.' },
+  { title: 'Your repayment was pooled with others to help a family in Houston pay for urgent car repairs.' },
 ]
 
 export default function Loan() {
   const navigate = useNavigate()
+  const borrower = useBorrower()
+  const loan = borrower?.activeLoan
   const [currentRedeploymentIndex, setCurrentRedeploymentIndex] = useState(0)
 
+  // No active loan — redirect to home
+  if (!loan) {
+    return (
+      <div style={{ maxWidth: 640, margin: '0 auto', padding: '80px 24px', textAlign: 'center' }}>
+        <h2 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 28, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 12 }}>
+          No active loan
+        </h2>
+        <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 15, color: 'var(--text-secondary)', marginBottom: 24 }}>
+          You don't have an active loan. Request one from your dashboard.
+        </p>
+        <button onClick={() => navigate('/borrower')} style={{ padding: '12px 24px', background: 'var(--teal-mid)', color: '#fff', border: 'none', borderRadius: 'var(--radius-md)', fontFamily: "'DM Sans', sans-serif", fontSize: 15, fontWeight: 600, cursor: 'pointer' }}>
+          Back to dashboard
+        </button>
+      </div>
+    )
+  }
+
+  const activeLoan = loan
+  const loanSchedule = loan.schedule || []
   const paidAmount = activeLoan.amount - activeLoan.remaining
-  const paidPercent = (paidAmount / activeLoan.amount) * 100
+  const paidPercent = activeLoan.amount > 0 ? (paidAmount / activeLoan.amount) * 100 : 0
 
   return (
     <motion.div
@@ -312,109 +301,7 @@ export default function Loan() {
           </div>
         </div>
 
-        {/* --- Journey of Your Loan --- */}
-        <div style={{
-          background: 'var(--bg-elevated)',
-          borderRadius: 'var(--radius-lg)',
-          boxShadow: 'var(--shadow-card)',
-          padding: '32px 28px',
-        }}>
-          <h2 style={{
-            fontFamily: "'Cormorant Garamond', serif",
-            fontSize: 28,
-            fontWeight: 500,
-            color: 'var(--text-primary)',
-            marginBottom: 24,
-          }}>
-            What happens when you repay?
-          </h2>
-
-          {/* Story card with teal accent bar */}
-          <div style={{
-            display: 'flex',
-            gap: 16,
-            marginBottom: 24,
-          }}>
-            <div style={{
-              width: 4,
-              borderRadius: 2,
-              background: 'var(--teal-mid)',
-              flexShrink: 0,
-            }} />
-            <div>
-              <p style={{
-                fontFamily: "'DM Sans', sans-serif",
-                fontSize: 15,
-                color: 'var(--text-primary)',
-                lineHeight: 1.7,
-              }}>
-                {activeLoan.redeploymentStories[currentRedeploymentIndex].title}
-              </p>
-              {activeLoan.redeploymentStories.length > 1 && (
-                <div style={{ display: 'flex', gap: 6, marginTop: 12 }}>
-                  {activeLoan.redeploymentStories.map((_, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => setCurrentRedeploymentIndex(idx)}
-                      style={{
-                        width: 8,
-                        height: 8,
-                        borderRadius: '50%',
-                        border: 'none',
-                        background: idx === currentRedeploymentIndex ? 'var(--teal-mid)' : 'var(--text-tertiary)',
-                        cursor: 'pointer',
-                        padding: 0,
-                        opacity: idx === currentRedeploymentIndex ? 1 : 0.4,
-                        transition: 'all var(--transition-base)',
-                      }}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Hadith */}
-          <div style={{
-            padding: '20px 24px',
-            background: 'var(--teal-glow)',
-            borderRadius: 'var(--radius-md)',
-            border: '1px solid rgba(74, 173, 164, 0.15)',
-            marginBottom: 20,
-          }}>
-            <p style={{
-              fontFamily: "'Cormorant Garamond', serif",
-              fontSize: 16,
-              fontStyle: 'italic',
-              color: 'var(--teal-light)',
-              lineHeight: 1.6,
-            }}>
-              "The one who lends is in sadaqah until it is repaid."
-            </p>
-            <p style={{
-              fontFamily: "'DM Sans', sans-serif",
-              fontSize: 12,
-              color: 'var(--text-tertiary)',
-              marginTop: 8,
-            }}>
-              — Ibn Majah
-            </p>
-          </div>
-
-          {/* Closing */}
-          <p style={{
-            fontFamily: "'DM Sans', sans-serif",
-            fontSize: 14,
-            color: 'var(--text-secondary)',
-            lineHeight: 1.6,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-          }}>
-            <Heart size={14} style={{ color: 'var(--teal-mid)' }} />
-            By repaying, you extend the chain of good.
-          </p>
-        </div>
+        {/* (Journey section removed — lender-facing content) */}
       </div>
 
       {/* ===== RIGHT SIDEBAR (35%) ===== */}
