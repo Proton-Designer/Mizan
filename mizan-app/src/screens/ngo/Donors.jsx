@@ -178,10 +178,10 @@ function TopDonors() {
       </div>
 
       {/* Table */}
-      <div style={{ overflowX: 'auto' }}>
+      <div style={{ overflowX: 'auto', background: 'rgba(22, 22, 31, 0.5)', backdropFilter: 'blur(12px)', border: '1px solid rgba(240, 237, 232, 0.06)', borderRadius: 20, overflow: 'hidden' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', ...dm(13) }}>
           <thead>
-            <tr style={{ borderBottom: '1px solid var(--border-default, #333)' }}>
+            <tr style={{ borderBottom: '1px solid var(--border-default, #333)', background: 'rgba(10, 10, 15, 0.8)' }}>
               {[
                 { key: null, label: 'Rank', w: 50 },
                 { key: 'name', label: 'Donor' },
@@ -283,8 +283,9 @@ function TopDonors() {
                 right: 0,
                 width: 340,
                 height: '100vh',
-                background: 'var(--bg-surface, #111)',
-                borderLeft: '1px solid var(--border-subtle, #222)',
+                background: 'rgba(22, 22, 31, 0.9)',
+                backdropFilter: 'blur(20px)',
+                borderLeft: '1px solid rgba(240, 237, 232, 0.08)',
                 zIndex: 'var(--z-modal, 200)',
                 overflowY: 'auto',
                 padding: 24,
@@ -372,7 +373,7 @@ function Segments() {
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 16 }}>
       {SEGMENTS.map(seg => (
-        <div key={seg.id} style={{ ...card, borderLeft: `4px solid ${seg.color}` }}>
+        <div key={seg.id} style={{ ...card, background: 'rgba(22, 22, 31, 0.55)', backdropFilter: 'blur(12px)', border: '1px solid rgba(240, 237, 232, 0.06)', borderLeft: `4px solid ${seg.color}` }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 12 }}>
             <span style={{ ...serif(18), color: 'var(--text-primary)' }}>{seg.label}</span>
             <span style={{ ...serif(28), color: seg.color }}>{seg.count}</span>

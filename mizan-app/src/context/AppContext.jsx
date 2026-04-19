@@ -5,7 +5,7 @@ const AppContext = createContext(null)
 export function AppProvider({ children }) {
   const [currentAccount, setCurrentAccount] = useState(null)
   const [demoUser, setDemoUser] = useState({
-    name: 'Yusuf',
+    name: 'Ayman',
     mosque: 'UT Austin MSA',
     streak: 23,
     totalDeployed: 1247,

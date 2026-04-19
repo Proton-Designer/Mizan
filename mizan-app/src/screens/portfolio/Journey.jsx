@@ -509,10 +509,10 @@ function StatCard({ icon, label, value, color }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35 }}
       style={{
-        background: 'var(--bg-surface, #111)',
-        borderRadius: 'var(--radius-md, 10px)',
-        border: '1px solid var(--border-subtle, #222)',
-        padding: '14px 16px',
+        background: 'rgba(22, 22, 31, 0.6)',
+        backdropFilter: 'blur(12px)',
+        border: '1px solid rgba(240, 237, 232, 0.06)',
+        borderRadius: 16, padding: '20px 16px', textAlign: 'center',
         display: 'flex', flexDirection: 'column', gap: 6,
       }}
     >
@@ -663,24 +663,21 @@ export default function Journey() {
       <style>{globalStyles}</style>
 
       {/* Header */}
-      <h1 style={{
-        fontFamily: "'Cormorant Garamond', serif",
-        fontSize: 32, fontWeight: 500,
-        color: 'var(--text-primary)', marginBottom: 4,
-      }}>
-        Your Journey
-      </h1>
-      <p style={{
-        fontFamily: "'DM Sans', sans-serif",
-        fontSize: 14, color: 'var(--text-secondary)', marginBottom: 24,
-      }}>
-        Track your impact across the world
-      </p>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 20 }}>
+        <div>
+          <h1 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 32, fontWeight: 600, color: 'var(--text-primary)', margin: 0 }}>
+            Impact Map
+          </h1>
+          <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: 'var(--text-tertiary)', margin: '4px 0 0' }}>
+            Track where your sadaqah reaches across the world
+          </p>
+        </div>
+      </div>
 
-      {/* Two-panel grid */}
+      {/* Stacked layout — map on top, content below */}
       <div style={{
-        display: 'grid',
-        gridTemplateColumns: '55fr 45fr',
+        display: 'flex',
+        flexDirection: 'column',
         gap: 24,
       }}>
         {/* ── LEFT PANEL ── */}
@@ -708,22 +705,64 @@ export default function Journey() {
 
           {/* Map container */}
           <div style={{
-            height: 420,
+            height: 520,
             width: '100%',
             background: 'var(--bg-void, #0a0a1a)',
-            borderRadius: 'var(--radius-lg, 16px)',
-            border: '1px solid var(--border-subtle, #222)',
+            borderRadius: 'var(--radius-xl, 20px)',
+            border: '1px solid rgba(240, 237, 232, 0.06)',
             overflow: 'hidden',
             position: 'relative',
+            boxShadow: '0 8px 40px rgba(0,0,0,0.4), inset 0 0 80px rgba(0,0,0,0.3)',
           }}>
             {/* Vignette overlay */}
             <div style={{
               position: 'absolute', inset: 0,
-              background: 'radial-gradient(ellipse at center, transparent 40%, var(--bg-deep, #0a0a1a) 100%)',
+              background: 'radial-gradient(ellipse at center, transparent 40%, var(--bg-deep, #0F0F1A) 100%)',
               pointerEvents: 'none',
               zIndex: 2,
-              borderRadius: 'var(--radius-lg, 16px)',
+              borderRadius: 'var(--radius-xl, 20px)',
             }} />
+
+            {/* Floating legend */}
+            <div style={{
+              position: 'absolute', bottom: 16, left: 16, zIndex: 3,
+              background: 'rgba(15, 15, 26, 0.85)',
+              backdropFilter: 'blur(12px)',
+              border: '1px solid rgba(240, 237, 232, 0.08)',
+              borderRadius: 12, padding: '12px 16px',
+              display: 'flex', gap: 16, fontSize: 11,
+              fontFamily: "'DM Sans', sans-serif",
+              color: 'var(--text-tertiary)',
+            }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#F87171' }} /> Crisis
+              </span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#60A5FA' }} /> Water
+              </span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#4ADE80' }} /> Food
+              </span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#D4A843' }} /> Borrower
+              </span>
+            </div>
+
+            {/* Floating stats */}
+            <div style={{
+              position: 'absolute', top: 16, right: 16, zIndex: 3,
+              background: 'rgba(15, 15, 26, 0.85)',
+              backdropFilter: 'blur(12px)',
+              border: '1px solid rgba(212, 168, 67, 0.12)',
+              borderRadius: 12, padding: '14px 18px',
+            }}>
+              <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 28, fontWeight: 600, color: 'var(--gold-light)' }}>
+                {positions.filter(p => p.status === 'active').length + positions.filter(p => p.status === 'complete').length} positions
+              </div>
+              <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 }}>
+                across {new Set(causePins.map(p => p.country)).size} countries
+              </div>
+            </div>
 
             {/* Map content */}
             <div style={{ width: '100%', height: '100%' }}>
@@ -736,10 +775,10 @@ export default function Journey() {
           </div>
         </div>
 
-        {/* ── RIGHT PANEL ── */}
+        {/* ── BELOW MAP: Stats + Log ── */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           {/* Impact Counters */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
             <StatCard icon={<Heart size={18} />} label="Families Helped" value={animFamilies} color="#EF4444" />
             <StatCard icon={<Utensils size={18} />} label="Meals Funded" value={animMeals} color="#22C55E" />
             <StatCard icon={<RefreshCw size={18} />} label="Loans Cycled" value={animLoans} color="#14B8A6" />
@@ -748,13 +787,13 @@ export default function Journey() {
 
           {/* Journey Log */}
           <div style={{
-            background: 'var(--bg-surface, #111)',
-            borderRadius: 'var(--radius-lg, 16px)',
-            border: '1px solid var(--border-subtle, #222)',
-            padding: 16,
-            maxHeight: 'calc(100vh - 400px)',
+            background: 'rgba(22, 22, 31, 0.5)',
+            backdropFilter: 'blur(12px)',
+            border: '1px solid rgba(240, 237, 232, 0.06)',
+            borderRadius: 'var(--radius-xl, 20px)',
+            padding: 24,
+            maxHeight: 400,
             overflowY: 'auto',
-            minHeight: 200,
           }}>
             <h3 style={{
               fontFamily: "'Cormorant Garamond', serif",

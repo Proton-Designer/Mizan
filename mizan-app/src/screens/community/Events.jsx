@@ -302,6 +302,11 @@ function EventCard({ event, isHighest, onMarkFollowup }) {
               fontSize: 28,
               color: multiplierColor,
               lineHeight: 1,
+              textShadow: event.correlationMultiplier > 5
+                ? '0 0 20px rgba(212, 168, 67, 0.3)'
+                : event.correlationMultiplier >= 2
+                  ? '0 0 20px rgba(74, 173, 164, 0.3)'
+                  : 'none',
             }}>
               {event.correlationMultiplier}x
             </span>
@@ -413,11 +418,11 @@ function EventROIChart({ events }) {
 
   return (
     <div style={{
-      background: 'var(--bg-surface)',
-      border: '1px solid var(--border-default)',
+      background: 'rgba(22, 22, 31, 0.45)',
+      backdropFilter: 'blur(8px)',
       borderRadius: 16,
-      padding: '22px 20px',
-      boxShadow: 'var(--shadow-card)',
+      border: '1px solid rgba(240, 237, 232, 0.06)',
+      padding: 24,
     }}>
       <h3 style={{
         fontFamily: "'Cormorant Garamond', serif",
@@ -576,9 +581,10 @@ const styles = {
 
   /* Event card */
   eventCard: {
-    background: 'var(--bg-surface)',
-    border: '1px solid var(--border-default)',
-    borderRadius: 16,
+    background: 'rgba(22, 22, 31, 0.55)',
+    backdropFilter: 'blur(12px)',
+    border: '1px solid rgba(240, 237, 232, 0.06)',
+    borderRadius: 20,
     padding: '22px 20px',
     boxShadow: 'var(--shadow-card)',
   },
@@ -618,7 +624,8 @@ const styles = {
   backdrop: {
     position: 'fixed',
     inset: 0,
-    background: 'rgba(0,0,0,0.6)',
+    background: 'rgba(0, 0, 0, 0.5)',
+    backdropFilter: 'blur(4px)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',

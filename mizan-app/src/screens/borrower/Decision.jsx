@@ -211,6 +211,8 @@ function ApprovedOutcome({ amount = 500, navigate, setApplicationStage, decision
       {/* Hero card with teal radial glow */}
       <div style={{
         background: `radial-gradient(ellipse at center, ${TEAL_GLOW} 0%, transparent 70%)`,
+        backdropFilter: 'blur(16px)',
+        border: '1px solid rgba(74, 173, 164, 0.1)',
         borderRadius: 24,
         padding: '48px 24px 40px',
         textAlign: 'center',
@@ -227,7 +229,7 @@ function ApprovedOutcome({ amount = 500, navigate, setApplicationStage, decision
               style={{
                 fontFamily: serif,
                 fontWeight: 600,
-                fontSize: 38,
+                fontSize: 42,
                 color: 'var(--text-primary)',
                 margin: 0,
                 lineHeight: 1.2,
@@ -247,6 +249,9 @@ function ApprovedOutcome({ amount = 500, navigate, setApplicationStage, decision
       >
         <div style={{
           ...card,
+          background: 'rgba(22, 22, 31, 0.55)',
+          backdropFilter: 'blur(12px)',
+          border: '1px solid rgba(74, 173, 164, 0.08)',
           borderLeft: `4px solid ${TEAL}`,
           marginBottom: 24,
         }}>
@@ -935,8 +940,9 @@ function DeniedOutcome({ decision = {}, mosqueName }) {
               {suggestions.map((s, i) => (
                 <div key={i} style={{
                   padding: '12px 16px',
-                  background: 'rgba(74,173,164,0.06)',
-                  border: '1px solid rgba(74,173,164,0.2)',
+                  background: 'rgba(22, 22, 31, 0.5)',
+                  backdropFilter: 'blur(8px)',
+                  border: '1px solid rgba(74, 173, 164, 0.12)',
                   borderRadius: 12,
                   borderLeft: `3px solid ${TEAL}`,
                 }}>
@@ -970,13 +976,13 @@ function DeniedOutcome({ decision = {}, mosqueName }) {
             <div style={{ display: 'flex', gap: 16 }}>
               <div>
                 <div style={{ fontFamily: sans, fontSize: 12, color: 'var(--text-tertiary)' }}>Need Score</div>
-                <div style={{ fontFamily: serif, fontSize: 20, fontWeight: 600, color: decision.needScore >= 50 ? TEAL : '#F87171' }}>
+                <div style={{ fontFamily: serif, fontSize: 28, fontWeight: 600, color: decision.needScore >= 50 ? TEAL : '#F87171' }}>
                   {decision.needScore}/100
                 </div>
               </div>
               <div>
                 <div style={{ fontFamily: sans, fontSize: 12, color: 'var(--text-tertiary)' }}>Trust Score</div>
-                <div style={{ fontFamily: serif, fontSize: 20, fontWeight: 600, color: decision.vouchScore >= 18 ? TEAL : '#F87171' }}>
+                <div style={{ fontFamily: serif, fontSize: 28, fontWeight: 600, color: decision.vouchScore >= 18 ? TEAL : '#F87171' }}>
                   {decision.vouchScore}/25
                 </div>
               </div>

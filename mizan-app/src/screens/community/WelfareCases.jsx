@@ -217,8 +217,9 @@ function CaseCard({ caseData, onClick }) {
       transition={{ duration: 0.25 }}
       onClick={() => onClick(caseData)}
       style={{
-        background: 'var(--bg-surface)',
-        border: '1px solid var(--border-default)',
+        background: 'rgba(22, 22, 31, 0.6)',
+        backdropFilter: 'blur(8px)',
+        border: '1px solid rgba(240, 237, 232, 0.06)',
         borderRadius: 12,
         overflow: 'hidden',
         cursor: 'pointer',
@@ -310,6 +311,7 @@ function KanbanColumn({ status, cases, onCardClick }) {
     <div style={{
       flex: '1 1 280px', minWidth: 260,
       display: 'flex', flexDirection: 'column',
+      background: 'rgba(22, 22, 31, 0.4)', borderRadius: 16, padding: '16px 12px',
     }}>
       {/* Column header */}
       <div style={{
@@ -391,7 +393,9 @@ function CaseDetailDrawer({ caseData, onClose, onAction }) {
       transition={{ type: 'spring', damping: 28, stiffness: 280 }}
       style={{
         position: 'fixed', top: 0, right: 0, bottom: 0, width: 400,
-        background: 'var(--bg-page)', borderLeft: '1px solid var(--border-default)',
+        background: 'rgba(22, 22, 31, 0.85)',
+        backdropFilter: 'blur(20px)',
+        borderLeft: '1px solid rgba(240, 237, 232, 0.08)',
         boxShadow: '-8px 0 32px rgba(0,0,0,0.15)',
         zIndex: 1000, overflowY: 'auto', padding: '24px 20px',
         display: 'flex', flexDirection: 'column',
@@ -453,9 +457,10 @@ function CaseDetailDrawer({ caseData, onClose, onAction }) {
 
       {/* Algorithm recommendation card */}
       <div style={{
-        border: '1px solid rgba(234,179,8,0.4)',
+        border: '1px solid rgba(212, 168, 67, 0.15)',
         borderRadius: 12, padding: '16px 14px', marginBottom: 20,
         background: 'rgba(234,179,8,0.04)',
+        boxShadow: '0 0 30px rgba(212, 168, 67, 0.06)',
       }}>
         <div style={{
           display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10,
@@ -637,7 +642,13 @@ function WelfareLedger({ resolvedCases }) {
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: 0.3 }}
-      style={styles.card}
+      style={{
+        ...styles.card,
+        background: 'rgba(22, 22, 31, 0.45)',
+        backdropFilter: 'blur(12px)',
+        border: '1px solid rgba(240, 237, 232, 0.06)',
+        borderRadius: 20,
+      }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
         <FileText size={18} style={{ color: 'var(--teal-light)' }} />

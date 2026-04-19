@@ -451,9 +451,10 @@ const styles = {
   /* Narrative */
   narrativeBox: {
     border: '1px solid var(--border-default)',
-    borderRadius: 8,
+    borderRadius: 12,
     padding: 16,
-    background: 'var(--bg-elevated)',
+    background: 'rgba(22, 22, 31, 0.6)',
+    backdropFilter: 'blur(8px)',
   },
   narrativeText: {
     fontFamily: "'DM Sans', sans-serif",
@@ -562,8 +563,10 @@ const styles = {
   },
   decisionCard: {
     cursor: 'pointer',
-    border: '1.5px solid var(--border-subtle)',
-    transition: 'border-color 0.2s, background 0.2s',
+    background: 'rgba(22, 22, 31, 0.55)',
+    backdropFilter: 'blur(8px)',
+    border: '1px solid rgba(240, 237, 232, 0.06)',
+    transition: 'all 200ms ease',
   },
   decisionHeader: {
     display: 'flex',

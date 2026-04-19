@@ -49,27 +49,35 @@ export default function HardshipConversion() {
       }} />
 
       {/* Quran 2:280 */}
-      <blockquote style={{
-        fontFamily: "'Cormorant Garamond', serif",
-        fontSize: 22,
-        fontWeight: 400,
-        fontStyle: 'italic',
-        lineHeight: 1.8,
-        color: 'var(--text-primary)',
-        margin: 0,
-        marginBottom: 8,
+      <div style={{
+        background: 'rgba(212, 168, 67, 0.03)',
+        borderRadius: 16,
+        padding: '24px 20px',
+        marginTop: 32,
+        marginBottom: 32,
       }}>
-        "If the debtor is in difficulty, grant him time until it is easy for him; and if you remit it as charity, that is better for you, if you only knew."
-      </blockquote>
+        <blockquote style={{
+          fontFamily: "'Cormorant Garamond', serif",
+          fontSize: 24,
+          fontWeight: 400,
+          fontStyle: 'italic',
+          lineHeight: 1.8,
+          color: 'var(--text-primary)',
+          margin: 0,
+          marginBottom: 8,
+        }}>
+          "If the debtor is in difficulty, grant him time until it is easy for him; and if you remit it as charity, that is better for you, if you only knew."
+        </blockquote>
 
-      <p style={{
-        fontFamily: "'DM Sans', sans-serif",
-        fontSize: 13,
-        color: 'var(--text-tertiary)',
-        marginBottom: 40,
-      }}>
-        — Quran 2:280
-      </p>
+        <p style={{
+          fontFamily: "'DM Sans', sans-serif",
+          fontSize: 13,
+          color: 'var(--text-tertiary)',
+          marginBottom: 0,
+        }}>
+          — Quran 2:280
+        </p>
+      </div>
 
       {/* What happens card — GOLD border */}
       <div style={{
@@ -200,7 +208,7 @@ export default function HardshipConversion() {
           alignItems: 'center',
           justifyContent: 'center',
           gap: 8,
-          boxShadow: 'var(--shadow-gold)',
+          boxShadow: '0 4px 24px rgba(212, 168, 67, 0.3), 0 0 60px rgba(212, 168, 67, 0.08)',
           transition: 'all var(--transition-base)',
           marginBottom: 12,
         }}

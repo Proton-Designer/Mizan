@@ -49,9 +49,11 @@ function ImpactEntryCard({ entry }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
       style={{
-        background: 'var(--bg-surface)',
-        border: '1px solid var(--border-subtle)',
-        borderRadius: 'var(--radius-lg)',
+        background: 'rgba(22, 22, 31, 0.5)',
+        backdropFilter: 'blur(8px)',
+        border: '1px solid rgba(240, 237, 232, 0.06)',
+        borderLeft: '3px solid rgba(212, 168, 67, 0.3)',
+        borderRadius: 16,
         padding: 20,
       }}
     >
@@ -157,8 +159,15 @@ export default function VaultPerson() {
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
-      style={{ padding: '24px 16px 80px', maxWidth: 640, margin: '0 auto' }}
+      style={{ padding: '24px 16px 80px', maxWidth: 640, margin: '0 auto', position: 'relative' }}
     >
+      {/* Gold gradient mesh */}
+      <div style={{
+        position: 'absolute', top: 0, left: 0, right: 0, height: 200,
+        background: 'radial-gradient(ellipse 50% 60% at 50% 0%, rgba(212, 168, 67, 0.06) 0%, transparent 70%)',
+        pointerEvents: 'none', zIndex: 0,
+      }} />
+
       {/* Back button */}
       <button
         onClick={() => navigate('/portfolio/vault')}
@@ -185,13 +194,13 @@ export default function VaultPerson() {
           <img
             src={person.photo}
             alt={person.name}
-            style={{ width: 80, height: 80, borderRadius: '50%', objectFit: 'cover', marginBottom: 16 }}
+            style={{ width: 96, height: 96, borderRadius: '50%', objectFit: 'cover', marginBottom: 16 }}
           />
         ) : (
           <div
             style={{
-              width: 80,
-              height: 80,
+              width: 96,
+              height: 96,
               borderRadius: '50%',
               background: initialColor(person.name),
               display: 'flex',
@@ -199,7 +208,7 @@ export default function VaultPerson() {
               justifyContent: 'center',
               fontFamily: "'Cormorant Garamond', serif",
               fontWeight: 600,
-              fontSize: 32,
+              fontSize: 38,
               color: '#fff',
               marginBottom: 16,
             }}
@@ -211,7 +220,7 @@ export default function VaultPerson() {
         <h1
           style={{
             fontFamily: "'Cormorant Garamond', serif",
-            fontSize: 32,
+            fontSize: 36,
             fontWeight: 600,
             color: 'var(--text-primary)',
             textAlign: 'center',

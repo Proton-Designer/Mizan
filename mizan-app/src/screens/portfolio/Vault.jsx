@@ -233,12 +233,13 @@ function PersonCard({ person, positions }) {
       whileHover={{ y: -2, boxShadow: 'var(--shadow-elevated)' }}
       transition={{ duration: 0.2 }}
       style={{
-        background: 'var(--bg-surface)',
+        background: 'rgba(22, 22, 31, 0.6)',
+        backdropFilter: 'blur(12px)',
         border: '1px solid var(--border-subtle)',
         borderRadius: 'var(--radius-lg)',
         padding: 24,
         cursor: 'pointer',
-        transition: 'var(--transition-base)',
+        transition: 'transform 200ms, box-shadow 200ms',
       }}
       onClick={() => navigate(`/portfolio/vault/${person.id}`)}
     >
@@ -366,7 +367,7 @@ export default function Vault() {
       <h1
         style={{
           fontFamily: "'Cormorant Garamond', serif",
-          fontSize: 32,
+          fontSize: 36,
           fontWeight: 600,
           color: 'var(--text-primary)',
           marginBottom: 8,
@@ -381,7 +382,7 @@ export default function Vault() {
           fontSize: 14,
           color: 'var(--text-secondary)',
           lineHeight: 1.6,
-          marginBottom: 32,
+          marginBottom: 8,
           maxWidth: 540,
         }}
       >
@@ -389,12 +390,13 @@ export default function Vault() {
         love -- whether they have passed or are still with you. Every position tagged here becomes
         part of their ongoing legacy of good.
       </p>
+      <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: 'var(--gold-mid)', marginTop: 8, marginBottom: 32 }}>{'\u0635\u062F\u0642\u0629 \u062C\u0627\u0631\u064A\u0629'} — Ongoing charity that continues after you</p>
 
       {/* Open an Account card */}
       <motion.div
         whileHover={{
-          boxShadow: '0 0 24px rgba(212,168,67,0.20), 0 0 60px rgba(212,168,67,0.08)',
-          borderColor: 'var(--gold-mid)',
+          boxShadow: '0 0 30px rgba(212, 168, 67, 0.15)',
+          borderColor: 'rgba(212, 168, 67, 0.4)',
         }}
         whileTap={{ scale: 0.99 }}
         onClick={() => setModalOpen(true)}
@@ -409,7 +411,7 @@ export default function Vault() {
           gap: 12,
           cursor: 'pointer',
           marginBottom: 24,
-          transition: 'var(--transition-base)',
+          transition: 'all 200ms ease',
         }}
       >
         <div

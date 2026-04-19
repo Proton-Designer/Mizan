@@ -120,7 +120,7 @@ function CampaignPipeline({ name, positions }) {
   const total = positions.reduce((s, p) => s + p.commitment, 0)
 
   return (
-    <div style={card}>
+    <div style={{ ...card, background: 'rgba(22, 22, 31, 0.5)', borderRadius: 16, border: '1px solid rgba(240, 237, 232, 0.06)', overflow: 'hidden' }}>
       <button
         onClick={() => setExpanded(!expanded)}
         style={{
@@ -398,7 +398,7 @@ export default function NGOSettlements() {
           </p>
         </div>
         <div style={{ textAlign: 'right' }}>
-          <div style={{ ...serif(32), color: 'var(--gold-mid)' }}>
+          <div style={{ ...serif(32), color: 'var(--gold-mid)', textShadow: '0 0 40px rgba(212, 168, 67, 0.2)' }}>
             ${pipelineTotal.toLocaleString()}
           </div>
           <div style={{ ...dm(11), color: 'var(--text-tertiary)' }}>

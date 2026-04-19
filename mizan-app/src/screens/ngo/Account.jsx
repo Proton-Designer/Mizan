@@ -120,7 +120,7 @@ function OrgProfileCard({ org }) {
   const [missionExpanded, setMissionExpanded] = useState(false)
 
   return (
-    <div style={card}>
+    <div style={{ ...card, background: 'radial-gradient(ellipse at 20% 30%, rgba(212, 168, 67, 0.06) 0%, transparent 60%), rgba(22, 22, 31, 0.55)', backdropFilter: 'blur(16px)', border: '1px solid rgba(212, 168, 67, 0.1)' }}>
       <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
         {/* Left column */}
         <div style={{ flex: '1 1 340px' }}>
@@ -308,8 +308,9 @@ function FinancialSettings({ org, financial, initiateWithdrawal }) {
       <div style={{ margin: '24px 0' }}>
         <div style={{ ...dm(12), color: 'var(--text-tertiary)', marginBottom: 4 }}>Available for withdrawal</div>
         <div style={{
-          ...serif(36),
+          ...serif(40),
           color: balance > 0 ? 'var(--status-green)' : 'var(--text-tertiary)',
+          textShadow: '0 0 30px rgba(74, 222, 128, 0.15)',
         }}>
           ${balance.toLocaleString()}
         </div>
@@ -384,8 +385,9 @@ function FinancialSettings({ org, financial, initiateWithdrawal }) {
           >
             <div style={{
               marginTop: 16, padding: 20, borderRadius: 12,
-              background: 'var(--bg-elevated)',
-              border: '1px solid var(--border-gold)',
+              background: 'rgba(22, 22, 31, 0.6)',
+              backdropFilter: 'blur(16px)',
+              border: '1px solid rgba(212, 168, 67, 0.12)',
             }}>
               <div style={{ ...dm(14), color: 'var(--text-primary)', marginBottom: 8 }}>
                 Confirm withdrawal of <strong>${(withdrawAmount || balance).toLocaleString()}</strong> to {org.bankName} ****{org.bankLast4}?
@@ -462,7 +464,7 @@ function TransactionHistory({ transactions }) {
   }
 
   return (
-    <div style={card}>
+    <div style={{ ...card, background: 'rgba(22, 22, 31, 0.5)', backdropFilter: 'blur(12px)', borderRadius: 20, overflow: 'hidden' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <h3 style={{ ...sectionTitle, margin: 0 }}>Transaction History</h3>
         <button onClick={handleExportCSV} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--gold-mid)', ...dm(13), display: 'flex', alignItems: 'center', gap: 4 }}>

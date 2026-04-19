@@ -30,7 +30,7 @@ export default function BorrowerHome() {
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      style={{ maxWidth: 680, margin: '0 auto', padding: '48px 24px 80px', position: 'relative' }}
+      style={{ maxWidth: 720, margin: '0 auto', padding: '48px 24px 80px', position: 'relative' }}
     >
       {/* Header */}
       <div style={{
@@ -50,7 +50,7 @@ export default function BorrowerHome() {
 
       {/* Explainer card */}
       <div style={{
-        background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)',
+        background: 'rgba(22, 22, 31, 0.55)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)', border: '1px solid rgba(74, 173, 164, 0.1)',
         borderRadius: 'var(--radius-xl)', padding: '28px 24px', marginBottom: 24,
       }}>
         {[
@@ -91,8 +91,12 @@ export default function BorrowerHome() {
       {/* Past loan history strip */}
       {pastLoans.length > 0 && (
         <div style={{
+          background: 'rgba(22, 22, 31, 0.4)', borderRadius: 12, padding: '12px 20px',
+          border: '1px solid rgba(240, 237, 232, 0.06)', marginBottom: 24,
+        }}>
+        <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          gap: 8, flexWrap: 'wrap', marginBottom: 24,
+          gap: 8, flexWrap: 'wrap',
           fontFamily: sans, fontSize: 13, color: 'var(--text-secondary)',
         }}>
           <span style={{ color: 'var(--text-tertiary)' }}>Past loans:</span>
@@ -114,7 +118,21 @@ export default function BorrowerHome() {
             ))}
           </span>
         </div>
+        </div>
       )}
+
+      {/* Current Balance Display */}
+      <div style={{ textAlign: 'center', marginBottom: 24 }}>
+        <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 14, fontWeight: 400, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>
+          Current Balance Owed
+        </div>
+        <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 56, fontWeight: 600, color: 'var(--teal-light, #7ECDC4)' }}>
+          $0
+        </div>
+        <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: 'var(--text-tertiary)' }}>
+          You have no outstanding loans
+        </div>
+      </div>
 
       {/* Primary CTA */}
       <motion.button

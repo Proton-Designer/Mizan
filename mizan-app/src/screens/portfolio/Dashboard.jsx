@@ -268,7 +268,7 @@ function HeroCard({ card, index }) {
    ───────────────────────────────────────────── */
 
 const TIME_FILTERS = ['1M', '3M', '6M', '1Y', 'All']
-const METRIC_TOGGLES = ['Families', 'Meals', 'Loans', 'Committed']
+const METRIC_TOGGLES = ['Families Helped', 'Meals Funded', 'Loans Funded', 'Capital Deployed']
 
 function ChartsRow({ positions }) {
   return (
@@ -502,7 +502,9 @@ function DonutChart({ positions }) {
   const modeSegments = useMemo(() => {
     const totals = { jariyah: 0, compound: 0, direct: 0 }
     positions.forEach((p) => {
-      const mode = p.mode || (p.type === 'direct' ? 'direct' : 'compound')
+      let mode = p.mode || (p.type === 'direct' ? 'direct' : 'compound')
+      // Normalize 'standard' to 'compound' — standard is just the non-jariyah compound mode
+      if (mode === 'standard') mode = 'compound'
       totals[mode] = (totals[mode] || 0) + p.amount
     })
     const total = Object.values(totals).reduce((s, v) => s + v, 0) || 1
@@ -518,6 +520,41 @@ function DonutChart({ positions }) {
   }, [positions])
 
   const segments = view === 'cause' ? causeSegments : view === 'region' ? regionSegments : modeSegments
+
+  const [hoveredSegment, setHoveredSegment] = useState(null)
+
+  // Descriptions for each segment type
+  const CAUSE_DESCRIPTIONS = {
+    emergency: 'Funds directed to active crisis zones and disaster relief',
+    water: 'Clean water wells, sanitation projects, and water access programs',
+    food: 'Feeding programs, food banks, and hunger relief initiatives',
+    orphan: 'Orphan sponsorship, school meals, and child welfare programs',
+    medical: 'Clinic visits, medical supplies, and healthcare access',
+    education: 'Scholarships, school supplies, and literacy programs',
+    community: 'Local mosque programs and community development',
+    refugees: 'Refugee resettlement, aid packages, and displacement support',
+  }
+  const REGION_DESCRIPTIONS = {
+    Yemen: 'Humanitarian aid in one of the world\'s worst crises',
+    Gaza: 'Emergency relief and rebuilding in Palestine',
+    Somalia: 'Water, food security, and development programs',
+    Pakistan: 'Education, orphan care, and disaster recovery',
+    Bangladesh: 'Rohingya support and community development',
+    Syria: 'Refugee aid and medical assistance',
+    USA: 'Local community loans and domestic programs',
+    Other: 'Programs across additional regions worldwide',
+  }
+  const MODE_DESCRIPTIONS = {
+    jariyah: 'Perpetual giving — your money cycles through qard hassan loans forever, generating continuous sadaqah',
+    compound: 'Your money helps families through interest-free loans before reaching the final cause — multiplied impact',
+    direct: 'Immediate donation — funds reach the cause today as direct sadaqah',
+  }
+
+  const getDescription = (seg) => {
+    if (view === 'cause') return CAUSE_DESCRIPTIONS[seg.key] || ''
+    if (view === 'region') return REGION_DESCRIPTIONS[seg.key] || ''
+    return MODE_DESCRIPTIONS[seg.key] || ''
+  }
 
   // Concentration warning (cause view only)
   const concentrationWarning = useMemo(() => {
@@ -574,8 +611,8 @@ function DonutChart({ positions }) {
       </div>
 
       {/* Donut */}
-      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px' }}>
-        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px', position: 'relative' }}>
+        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ cursor: 'pointer' }}>
           {(() => { cumulativePercent = 0; return null })()}
           {segments.map((seg, i) => {
             const offset = cumulativePercent
@@ -583,20 +620,83 @@ function DonutChart({ positions }) {
             const dashLength = (seg.percent / 100) * circumference
             const dashGap = circumference - dashLength
             const rotation = (offset / 100) * 360 - 90
+            const isHovered = hoveredSegment === seg.key
 
             return (
               <motion.circle
                 key={`${view}-${seg.key}`}
                 cx={cx} cy={cy} r={radius} fill="none"
-                stroke={seg.color} strokeWidth={strokeW} strokeLinecap="butt"
+                stroke={seg.color}
+                strokeWidth={isHovered ? strokeW + 6 : strokeW}
+                strokeLinecap="butt"
                 transform={`rotate(${rotation} ${cx} ${cy})`}
                 initial={{ strokeDasharray: `0 ${circumference}` }}
                 animate={{ strokeDasharray: `${dashLength} ${dashGap}` }}
                 transition={{ duration: 0.6, delay: i * 0.08, ease: 'easeOut' }}
+                onMouseEnter={() => setHoveredSegment(seg.key)}
+                onMouseLeave={() => setHoveredSegment(null)}
+                style={{ transition: 'stroke-width 200ms ease', filter: isHovered ? `drop-shadow(0 0 8px ${seg.color})` : 'none' }}
               />
             )
           })}
+          {/* Center text when hovering */}
+          {hoveredSegment && (() => {
+            const seg = segments.find(s => s.key === hoveredSegment)
+            if (!seg) return null
+            return (
+              <>
+                <text x={cx} y={cy - 8} textAnchor="middle" fill="var(--text-primary)" fontFamily="'Cormorant Garamond', serif" fontSize="22" fontWeight="600">
+                  {seg.percent}%
+                </text>
+                <text x={cx} y={cy + 12} textAnchor="middle" fill="var(--text-secondary)" fontFamily="'DM Sans', sans-serif" fontSize="10">
+                  ${seg.amount.toLocaleString()}
+                </text>
+              </>
+            )
+          })()}
         </svg>
+
+        {/* Hover tooltip */}
+        <AnimatePresence>
+          {hoveredSegment && (() => {
+            const seg = segments.find(s => s.key === hoveredSegment)
+            if (!seg) return null
+            return (
+              <motion.div
+                key={hoveredSegment}
+                initial={{ opacity: 0, y: 4, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.15 }}
+                style={{
+                  position: 'absolute', bottom: -8, left: '50%', transform: 'translateX(-50%)',
+                  background: 'rgba(15, 15, 26, 0.92)', backdropFilter: 'blur(16px)',
+                  border: `1px solid ${seg.color}30`, borderRadius: 12,
+                  padding: '12px 16px', width: 220, zIndex: 10,
+                  boxShadow: `0 8px 24px rgba(0,0,0,0.4), 0 0 20px ${seg.color}15`,
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                  <span style={{ width: 10, height: 10, borderRadius: '50%', background: seg.color, flexShrink: 0 }} />
+                  <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>
+                    {seg.icon ? `${seg.icon} ` : ''}{seg.label}
+                  </span>
+                </div>
+                <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: 'var(--text-secondary)', margin: '0 0 8px', lineHeight: 1.5 }}>
+                  {getDescription(seg)}
+                </p>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: "'DM Sans', sans-serif", fontSize: 12 }}>
+                  <span style={{ color: 'var(--text-tertiary)' }}>Amount</span>
+                  <span style={{ color: seg.color, fontWeight: 600 }}>${seg.amount.toLocaleString()}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: "'DM Sans', sans-serif", fontSize: 12, marginTop: 2 }}>
+                  <span style={{ color: 'var(--text-tertiary)' }}>Share</span>
+                  <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>{seg.percent}%</span>
+                </div>
+              </motion.div>
+            )
+          })()}
+        </AnimatePresence>
       </div>
 
       {/* Legend */}

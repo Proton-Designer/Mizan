@@ -243,7 +243,7 @@ export default function Discover() {
       <h1
         style={{
           fontFamily: cormorant,
-          fontSize: 32,
+          fontSize: 36,
           fontWeight: 500,
           color: 'var(--text-primary)',
           marginBottom: 8,
@@ -251,6 +251,16 @@ export default function Discover() {
       >
         Discover Causes
       </h1>
+      <p
+        style={{
+          fontFamily: dmSans,
+          fontSize: 14,
+          color: 'var(--text-tertiary)',
+          marginBottom: 4,
+        }}
+      >
+        Find verified causes that match your values
+      </p>
       <p
         style={{
           fontFamily: dmSans,
@@ -500,11 +510,14 @@ function ForYouTab({ sunnahDiscovery, sunnahReason, regularFeed, openInvest, nav
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
           style={{
-            border: '1px solid var(--border-gold)',
+            border: '1px solid rgba(212, 168, 67, 0.15)',
             borderRadius: 'var(--radius-lg)',
             padding: 24,
             marginBottom: 28,
-            background: 'var(--bg-surface)',
+            background: 'rgba(22, 22, 31, 0.55)',
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
+            boxShadow: '0 4px 32px rgba(0,0,0,0.3), 0 0 60px rgba(212, 168, 67, 0.04)',
           }}
         >
           {/* Top label */}
@@ -645,6 +658,7 @@ function ForYouTab({ sunnahDiscovery, sunnahReason, regularFeed, openInvest, nav
               fontFamily: dmSans,
               fontSize: 14,
               fontWeight: 600,
+              letterSpacing: '0.02em',
               cursor: 'pointer',
               marginBottom: 14,
             }}
@@ -842,11 +856,12 @@ function TrendingTab({ feed, openInvest, navigate }) {
                     background: 'var(--gradient-gold)',
                     color: 'var(--text-inverse)',
                     border: 'none',
-                    borderRadius: 6,
+                    borderRadius: 8,
                     padding: '7px 14px',
                     fontFamily: dmSans,
                     fontSize: 13,
                     fontWeight: 600,
+                    letterSpacing: '0.02em',
                     cursor: 'pointer',
                   }}
                 >
@@ -1115,11 +1130,12 @@ function AllCausesTab({
                   background: 'var(--gradient-gold)',
                   color: 'var(--text-inverse)',
                   border: 'none',
-                  borderRadius: 6,
+                  borderRadius: 8,
                   padding: '6px 0',
                   fontFamily: "'DM Sans', sans-serif",
                   fontSize: 12,
                   fontWeight: 600,
+                  letterSpacing: '0.02em',
                   cursor: 'pointer',
                   width: '100%',
                 }}
@@ -1145,6 +1161,7 @@ function CauseCard({ ngo, index, openInvest, navigate }) {
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
+      whileHover={{ y: -4, boxShadow: '0 12px 40px rgba(0,0,0,0.4)' }}
       transition={{ delay: 0.05 + index * 0.04 }}
       onClick={() => navigate(`/portfolio/discover/${ngo.id}`)}
       style={{
@@ -1156,6 +1173,7 @@ function CauseCard({ ngo, index, openInvest, navigate }) {
         display: 'flex',
         flexDirection: 'column',
         gap: 10,
+        transition: 'transform 200ms ease, box-shadow 200ms ease',
       }}
     >
       {/* Logo + name row */}
@@ -1277,11 +1295,12 @@ function CauseCard({ ngo, index, openInvest, navigate }) {
           background: 'var(--gradient-gold)',
           color: 'var(--text-inverse)',
           border: 'none',
-          borderRadius: 6,
+          borderRadius: 8,
           padding: '7px 14px',
           fontFamily: dmSans,
           fontSize: 13,
           fontWeight: 600,
+          letterSpacing: '0.02em',
           cursor: 'pointer',
           marginTop: 2,
         }}

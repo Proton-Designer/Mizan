@@ -17,13 +17,17 @@ function SettingsRow({ label, detail, onClick, danger }) {
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        padding: '14px 0',
+        padding: '14px 8px',
         background: 'none',
         border: 'none',
         borderBottom: '1px solid var(--border-subtle)',
         cursor: onClick ? 'pointer' : 'default',
         textAlign: 'left',
+        transition: 'background 150ms ease',
+        borderRadius: 4,
       }}
+      onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(240, 237, 232, 0.03)'}
+      onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
     >
       <span style={{
         fontFamily: "'DM Sans', sans-serif",
@@ -183,10 +187,10 @@ export default function Account() {
     fontSize: 12,
     fontWeight: 500,
     padding: '4px 12px',
-    borderRadius: 'var(--radius-pill)',
-    background: 'var(--teal-glow)',
-    color: 'var(--teal-light)',
-    border: '1px solid rgba(74,173,164,0.2)',
+    borderRadius: 999,
+    background: 'rgba(74, 173, 164, 0.12)',
+    color: 'var(--teal-mid)',
+    border: '1px solid rgba(74, 173, 164, 0.2)',
   }
 
   return (
@@ -197,7 +201,17 @@ export default function Account() {
       style={{ maxWidth: 800, margin: '0 auto', padding: '48px 24px 80px' }}
     >
       {/* ============ Profile Card ============ */}
-      <div style={{ ...card, display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
+      <div style={{
+        ...card,
+        background: 'radial-gradient(ellipse at 20% 30%, rgba(74, 173, 164, 0.08) 0%, transparent 60%), rgba(22, 22, 31, 0.55)',
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
+        border: '1px solid rgba(74, 173, 164, 0.1)',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 20,
+        flexWrap: 'wrap',
+      }}>
         {/* Avatar */}
         <div style={{
           width: 64,
@@ -349,7 +363,13 @@ export default function Account() {
       </div>
 
       {/* ============ Transaction History (Collapsible) ============ */}
-      <div style={card}>
+      <div style={{
+        ...card,
+        background: 'rgba(22, 22, 31, 0.55)',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
+        border: '1px solid rgba(240, 237, 232, 0.06)',
+      }}>
         <button
           onClick={() => setTxOpen(prev => !prev)}
           style={{

@@ -53,7 +53,7 @@ export default function Hardship() {
       {/* Heading */}
       <h1 style={{
         fontFamily: "'Cormorant Garamond', serif",
-        fontSize: 36,
+        fontSize: 40,
         fontWeight: 600,
         lineHeight: 1.15,
         color: 'var(--text-primary)',
@@ -112,7 +112,13 @@ export default function Hardship() {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 + i * 0.08, duration: 0.3 }}
-              whileHover={{ scale: 1.015, borderColor: 'var(--teal-mid)' }}
+              whileHover={{
+                scale: 1.015,
+                borderColor: 'var(--teal-mid)',
+                boxShadow: card.key === 'conversion'
+                  ? '0 0 20px rgba(74, 222, 128, 0.15)'
+                  : '0 0 20px rgba(74, 173, 164, 0.15)',
+              }}
               whileTap={{ scale: 0.98 }}
               onClick={() => handlePathClick(card)}
               style={{
@@ -121,8 +127,10 @@ export default function Hardship() {
                 gap: 16,
                 width: '100%',
                 padding: '20px 24px',
-                background: 'var(--bg-elevated)',
-                border: '1px solid var(--border-default)',
+                background: 'rgba(22, 22, 31, 0.55)',
+                backdropFilter: 'blur(12px)',
+                WebkitBackdropFilter: 'blur(12px)',
+                border: '1px solid rgba(240, 237, 232, 0.06)',
                 borderRadius: 'var(--radius-md)',
                 cursor: 'pointer',
                 transition: 'all var(--transition-base)',

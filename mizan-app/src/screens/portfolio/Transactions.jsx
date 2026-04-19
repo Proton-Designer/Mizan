@@ -58,7 +58,7 @@ export default function Transactions() {
       <h1
         style={{
           fontFamily: "'Cormorant Garamond', serif",
-          fontSize: 28,
+          fontSize: 32,
           fontWeight: 600,
           color: 'var(--text-primary)',
           margin: 0,
@@ -66,6 +66,7 @@ export default function Transactions() {
       >
         Transaction History
       </h1>
+      <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 14, color: 'var(--text-tertiary)', margin: '4px 0 0' }}>Complete record of all portfolio activity</p>
 
       {/* Filter */}
       <div style={{ marginTop: 16, marginBottom: 24 }}>
@@ -78,10 +79,11 @@ export default function Transactions() {
           style={{
             fontFamily: "'DM Sans', sans-serif",
             fontSize: 14,
-            padding: '8px 14px',
-            borderRadius: 'var(--radius-md, 8px)',
+            height: 36,
+            padding: '0 16px',
+            borderRadius: 999,
             border: '1px solid var(--border-subtle)',
-            background: 'var(--bg-surface)',
+            background: 'var(--bg-elevated)',
             color: 'var(--text-primary)',
             cursor: 'pointer',
             outline: 'none',
@@ -114,15 +116,16 @@ export default function Transactions() {
           {/* Table container */}
           <div
             style={{
-              border: '1px solid var(--border-subtle)',
-              borderRadius: 'var(--radius-lg, 12px)',
+              border: '1px solid rgba(240, 237, 232, 0.06)',
+              borderRadius: 'var(--radius-xl)',
               overflow: 'hidden',
-              background: 'var(--bg-surface)',
+              background: 'rgba(22, 22, 31, 0.5)',
+              backdropFilter: 'blur(12px)',
             }}
           >
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
-                <tr style={{ background: 'var(--bg-elevated)' }}>
+                <tr style={{ background: 'rgba(10, 10, 15, 0.8)', borderBottom: '1px solid var(--border-subtle)' }}>
                   {['Date', 'Type', 'Description', 'Amount', 'Balance After'].map((col) => (
                     <th
                       key={col}
@@ -217,7 +220,7 @@ export default function Transactions() {
                           fontFamily: "'DM Sans', sans-serif",
                           fontSize: 14,
                           fontWeight: 600,
-                          color: isPositive ? '#10B981' : '#EF4444',
+                          color: isPositive ? '#4ADE80' : '#F87171',
                           padding: '14px 16px',
                           textAlign: 'right',
                           whiteSpace: 'nowrap',

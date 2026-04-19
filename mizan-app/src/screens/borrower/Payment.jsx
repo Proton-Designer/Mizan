@@ -96,8 +96,10 @@ export default function Payment() {
     >
       {/* ===== Scheduled Payment Card ===== */}
       <div style={{
-        background: 'var(--bg-elevated)',
-        borderRadius: 'var(--radius-lg)',
+        background: 'rgba(22, 22, 31, 0.55)',
+        backdropFilter: 'blur(16px)',
+        border: '1px solid rgba(74, 173, 164, 0.1)',
+        borderRadius: 20,
         boxShadow: 'var(--shadow-card)',
         padding: '32px',
         marginBottom: 28,
@@ -117,11 +119,12 @@ export default function Payment() {
 
         <p style={{
           fontFamily: "'Cormorant Garamond', serif",
-          fontSize: 52,
+          fontSize: 56,
           fontWeight: 600,
           color: 'var(--text-primary)',
           lineHeight: 1.1,
           marginBottom: 8,
+          textShadow: '0 0 40px rgba(74, 173, 164, 0.15)',
         }}>
           ${SCHEDULED_AMOUNT}
         </p>
@@ -194,15 +197,15 @@ export default function Payment() {
               style={{
                 padding: '10px 20px',
                 background: selectedChip === val && !customMode
-                  ? 'var(--teal-mid)'
-                  : 'var(--bg-overlay)',
+                  ? 'rgba(74, 173, 164, 0.1)'
+                  : 'rgba(22, 22, 31, 0.6)',
                 color: selectedChip === val && !customMode
                   ? 'var(--text-inverse)'
                   : 'var(--text-primary)',
                 border: selectedChip === val && !customMode
                   ? '1px solid var(--teal-mid)'
-                  : '1px solid var(--border-default)',
-                borderRadius: 'var(--radius-pill)',
+                  : '1px solid rgba(240, 237, 232, 0.08)',
+                borderRadius: 12,
                 fontFamily: "'DM Sans', sans-serif",
                 fontSize: 14,
                 fontWeight: 600,
@@ -513,10 +516,10 @@ export default function Payment() {
       {/* ===== Having Trouble Section ===== */}
       {paymentState === 'idle' && (
         <div style={{
-          background: 'var(--bg-elevated)',
-          borderRadius: 'var(--radius-lg)',
-          boxShadow: 'var(--shadow-card)',
-          padding: '24px 28px',
+          background: 'rgba(22, 22, 31, 0.4)',
+          borderRadius: 16,
+          padding: '20px 24px',
+          border: '1px solid rgba(240, 237, 232, 0.06)',
         }}>
           <p style={{
             fontFamily: "'DM Sans', sans-serif",

@@ -39,7 +39,9 @@ function CampaignCard({ name, percent, compound, note, noteColor, goalMet }) {
   return (
     <div style={{
       minWidth: '280px',
-      background: 'var(--bg-card)',
+      background: 'rgba(22, 22, 31, 0.55)',
+      backdropFilter: 'blur(12px)',
+      border: '1px solid rgba(240, 237, 232, 0.06)',
       borderRadius: '14px',
       borderLeft: '4px solid var(--gold)',
       padding: '18px 16px',
@@ -134,11 +136,20 @@ export default function NGODashboard() {
   }
 
   return (
-    <div style={{ padding: '24px 16px 40px', maxWidth: '800px', margin: '0 auto' }}>
+    <div style={{ padding: '24px 16px 40px', maxWidth: '800px', margin: '0 auto', position: 'relative' }}>
+
+      {/* ── Gold gradient mesh ── */}
+      <div style={{
+        position: 'absolute', top: 0, left: 0, right: 0, height: 350,
+        background: 'radial-gradient(ellipse 60% 50% at 50% 0%, rgba(212, 168, 67, 0.06) 0%, transparent 70%)',
+        pointerEvents: 'none', zIndex: 0,
+      }} />
 
       {/* ── Hero Card ── */}
       <div style={{
-        background: `radial-gradient(ellipse at 30% 20%, rgba(212,175,55,0.18) 0%, transparent 60%), var(--bg-card)`,
+        background: `radial-gradient(ellipse at 30% 20%, rgba(212,175,55,0.18) 0%, transparent 60%), rgba(22, 22, 31, 0.55)`,
+        backdropFilter: 'blur(16px)',
+        border: '1px solid rgba(212, 168, 67, 0.1)',
         borderRadius: '18px',
         padding: '24px 20px',
         marginBottom: '24px',
@@ -255,7 +266,8 @@ export default function NGODashboard() {
         {/* Pending Actions (60%) */}
         <div style={{
           flex: '3 1 320px',
-          background: 'var(--bg-card)',
+          background: 'rgba(22, 22, 31, 0.5)',
+          backdropFilter: 'blur(12px)',
           borderRadius: '14px',
           padding: '18px 16px',
         }}>
@@ -294,7 +306,9 @@ export default function NGODashboard() {
         {/* Settlement Calendar (40%) */}
         <div style={{
           flex: '2 1 220px',
-          background: 'var(--bg-card)',
+          background: 'rgba(22, 22, 31, 0.55)',
+          border: '1px solid rgba(212, 168, 67, 0.1)',
+          backdropFilter: 'blur(16px)',
           borderRadius: '14px',
           padding: '18px 16px',
         }}>

@@ -56,10 +56,13 @@ export default function Loan() {
 
         {/* --- Loan Hero Card --- */}
         <div style={{
-          background: 'var(--bg-elevated)',
+          background: 'radial-gradient(ellipse at 30% 20%, rgba(74, 173, 164, 0.12) 0%, transparent 60%), rgba(22, 22, 31, 0.6)',
+          backdropFilter: 'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)',
           borderRadius: 'var(--radius-lg)',
           overflow: 'hidden',
           boxShadow: 'var(--shadow-card)',
+          border: '1px solid rgba(74, 173, 164, 0.1)',
           marginBottom: 32,
         }}>
           {/* Teal radial glow top */}
@@ -83,7 +86,7 @@ export default function Loan() {
             <div style={{ marginTop: 12, marginBottom: 8 }}>
               <span style={{
                 fontFamily: "'Cormorant Garamond', serif",
-                fontSize: 48,
+                fontSize: 52,
                 fontWeight: 600,
                 color: 'var(--text-primary)',
                 lineHeight: 1.1,
@@ -107,15 +110,15 @@ export default function Loan() {
               color: 'var(--text-secondary)',
               marginBottom: 16,
             }}>
-              <span style={{ color: 'var(--text-primary)', fontWeight: 600 }}>${activeLoan.remaining} remaining</span>
+              <span style={{ color: 'var(--text-tertiary)', fontWeight: 600 }}>${activeLoan.remaining} remaining</span>
             </p>
 
             {/* Progress bar — inverted: remaining = red-tinted, paid = teal */}
             <div style={{
               width: '100%',
-              height: 10,
+              height: 12,
               background: 'rgba(248, 113, 113, 0.25)',
-              borderRadius: 'var(--radius-pill)',
+              borderRadius: 6,
               overflow: 'hidden',
               marginBottom: 20,
             }}>
@@ -126,7 +129,8 @@ export default function Loan() {
                 style={{
                   height: '100%',
                   background: 'var(--teal-mid)',
-                  borderRadius: 'var(--radius-pill)',
+                  borderRadius: 6,
+                  boxShadow: '0 0 12px rgba(74, 173, 164, 0.3)',
                 }}
               />
             </div>
@@ -189,10 +193,12 @@ export default function Loan() {
 
         {/* --- Repayment Schedule --- */}
         <div id="repayment-schedule" style={{
-          background: 'var(--bg-elevated)',
-          borderRadius: 'var(--radius-lg)',
-          boxShadow: 'var(--shadow-card)',
-          padding: '28px 28px 20px',
+          background: 'rgba(22, 22, 31, 0.5)',
+          backdropFilter: 'blur(12px)',
+          borderRadius: 20,
+          border: '1px solid rgba(240, 237, 232, 0.06)',
+          padding: 24,
+          overflow: 'hidden',
           marginBottom: 32,
         }}>
           <h2 style={{
@@ -309,9 +315,10 @@ export default function Loan() {
 
         {/* Quick Actions */}
         <div style={{
-          background: 'var(--bg-elevated)',
+          background: 'rgba(22, 22, 31, 0.5)',
+          backdropFilter: 'blur(12px)',
           borderRadius: 'var(--radius-lg)',
-          boxShadow: 'var(--shadow-card)',
+          border: '1px solid rgba(240, 237, 232, 0.06)',
           padding: '24px',
           marginBottom: 20,
         }}>
@@ -394,9 +401,10 @@ export default function Loan() {
 
         {/* Account Summary */}
         <div style={{
-          background: 'var(--bg-elevated)',
+          background: 'rgba(22, 22, 31, 0.5)',
+          backdropFilter: 'blur(12px)',
           borderRadius: 'var(--radius-lg)',
-          boxShadow: 'var(--shadow-card)',
+          border: '1px solid rgba(240, 237, 232, 0.06)',
           padding: '24px',
           marginBottom: 20,
         }}>
@@ -447,9 +455,10 @@ export default function Loan() {
 
         {/* Trust Level */}
         <div style={{
-          background: 'var(--bg-elevated)',
+          background: 'rgba(22, 22, 31, 0.5)',
+          backdropFilter: 'blur(12px)',
           borderRadius: 'var(--radius-lg)',
-          boxShadow: 'var(--shadow-card)',
+          border: '1px solid rgba(240, 237, 232, 0.06)',
           padding: '24px',
         }}>
           <h3 style={{
@@ -474,9 +483,10 @@ export default function Loan() {
               <Star
                 key={n}
                 size={20}
-                fill={n <= 4 ? 'var(--teal-mid)' : 'transparent'}
+                fill={n <= 4 ? '#D4A843' : 'transparent'}
                 style={{
-                  color: n <= 4 ? 'var(--teal-mid)' : 'var(--text-tertiary)',
+                  color: n <= 4 ? '#D4A843' : 'var(--text-tertiary)',
+                  filter: n <= 4 ? 'drop-shadow(0 0 4px rgba(212, 168, 67, 0.4))' : 'none',
                 }}
               />
             ))}

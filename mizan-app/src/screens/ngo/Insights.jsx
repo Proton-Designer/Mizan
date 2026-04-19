@@ -124,7 +124,7 @@ function AnalyticsTab() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
 
       {/* ── Campaign Funnel ── */}
-      <div style={card}>
+      <div style={{ ...card, background: 'rgba(22, 22, 31, 0.5)', backdropFilter: 'blur(12px)', borderRadius: 20, padding: 28 }}>
         <div style={sectionTitle}>CAMPAIGN FUNNEL</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxWidth: 480 }}>
           {FUNNEL_STEPS.map((step, i) => (
@@ -234,19 +234,19 @@ function AnalyticsTab() {
 
       {/* ── Retention Stats ── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 16 }}>
-        <div style={card}>
+        <div style={{ ...card, background: 'rgba(22, 22, 31, 0.55)', border: '1px solid rgba(240, 237, 232, 0.06)' }}>
           <div style={sectionTitle}>DONOR RETENTION</div>
           <div style={{ ...serif(36), color: 'var(--gold-light, #F5D485)' }}>41%</div>
           <div style={{ ...dm(12), color: 'var(--text-secondary)', marginTop: 4 }}>your retention rate</div>
         </div>
-        <div style={card}>
+        <div style={{ ...card, background: 'rgba(22, 22, 31, 0.55)', border: '1px solid rgba(240, 237, 232, 0.06)' }}>
           <div style={sectionTitle}>INDUSTRY AVG</div>
           <div style={{ ...serif(36), color: 'var(--text-tertiary, #888)' }}>23%</div>
           <div style={{ ...dm(12), color: 'var(--text-secondary)', marginTop: 4 }}>
             <span style={{ color: 'var(--status-green, #4ade80)', fontWeight: 600 }}>+18pp</span> above average
           </div>
         </div>
-        <div style={card}>
+        <div style={{ ...card, background: 'rgba(22, 22, 31, 0.55)', border: '1px solid rgba(240, 237, 232, 0.06)' }}>
           <div style={sectionTitle}>JARIYAH RETENTION</div>
           <div style={{ ...serif(36), color: 'var(--status-green, #4ade80)' }}>100%</div>
           <div style={{ ...dm(12), color: 'var(--text-secondary)', marginTop: 4 }}>18 Jariyah donors &mdash; zero lapsed</div>
@@ -268,7 +268,7 @@ function ABTestsTab() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
 
       {/* Completed test */}
-      <div style={{ ...card, borderLeft: '4px solid var(--status-green, #4ade80)' }}>
+      <div style={{ ...card, background: 'rgba(22, 22, 31, 0.55)', backdropFilter: 'blur(8px)', borderLeft: '4px solid var(--status-green, #4ade80)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 10 }}>
           <div>
             <span style={{
@@ -308,7 +308,7 @@ function ABTestsTab() {
       </div>
 
       {/* Active test */}
-      <div style={{ ...card, borderLeft: '4px solid var(--status-blue, #60a5fa)' }}>
+      <div style={{ ...card, background: 'rgba(22, 22, 31, 0.55)', backdropFilter: 'blur(8px)', borderLeft: '4px solid var(--status-blue, #60a5fa)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 10 }}>
           <div>
             <span style={{

@@ -274,6 +274,9 @@ const styles = {
     position: 'relative',
     paddingLeft: 20,
     overflow: 'hidden',
+    background: 'rgba(22, 22, 31, 0.55)',
+    backdropFilter: 'blur(12px)',
+    border: '1px solid rgba(240, 237, 232, 0.06)',
   },
   redAccent: {
     position: 'absolute',
@@ -437,6 +440,9 @@ const styles = {
   trustBadge: {
     marginTop: 20,
     textAlign: 'center',
+    background: 'rgba(22, 22, 31, 0.55)',
+    border: '1px solid rgba(212, 168, 67, 0.12)',
+    boxShadow: '0 0 30px rgba(212, 168, 67, 0.04)',
   },
   trustTop: {
     marginBottom: 10,

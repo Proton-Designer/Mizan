@@ -308,7 +308,12 @@ export default function Congregation() {
 
           {/* Hero — Congregation Health Score */}
           <motion.section
-            style={styles.card}
+            style={{
+              ...styles.card,
+              background: 'rgba(22, 22, 31, 0.55)',
+              backdropFilter: 'blur(16px)',
+              border: '1px solid rgba(74, 173, 164, 0.1)',
+            }}
             variants={fadeUp}
             initial="hidden"
             animate="visible"
@@ -454,7 +459,14 @@ export default function Congregation() {
 
           {/* Community Heat Map */}
           <motion.section
-            style={styles.card}
+            style={{
+              ...styles.card,
+              background: 'var(--bg-void, #0A0A0F)',
+              borderRadius: 20,
+              border: '1px solid rgba(240, 237, 232, 0.06)',
+              boxShadow: '0 8px 40px rgba(0,0,0,0.3)',
+              overflow: 'hidden',
+            }}
             variants={fadeUp}
             initial="hidden"
             animate="visible"
@@ -474,7 +486,7 @@ export default function Congregation() {
 
           {/* Aggregate Loan Impact */}
           <motion.section
-            style={{ ...styles.card, background: 'rgba(13,148,136,0.06)', border: '1px solid rgba(13,148,136,0.18)' }}
+            style={{ ...styles.card, background: 'rgba(22, 22, 31, 0.55)', border: '1px solid rgba(212, 168, 67, 0.1)' }}
             variants={fadeUp}
             initial="hidden"
             animate="visible"

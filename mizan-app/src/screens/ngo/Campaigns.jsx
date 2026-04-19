@@ -274,14 +274,15 @@ function ActiveCampaignCard({ campaign, index, onPostUpdate }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.07, duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
       style={{
-        background: 'var(--bg-surface)',
+        background: 'rgba(22, 22, 31, 0.55)',
+        backdropFilter: 'blur(12px)',
         borderRadius: 'var(--radius-lg)',
         boxShadow: 'var(--shadow-card)',
         padding: '24px 28px',
         marginBottom: 16,
         position: 'relative',
         overflow: 'hidden',
-        border: '1px solid var(--border-subtle)',
+        border: '1px solid rgba(240, 237, 232, 0.06)',
       }}
     >
       {/* Gold left accent bar */}
@@ -311,6 +312,7 @@ function ActiveCampaignCard({ campaign, index, onPostUpdate }) {
             padding: '3px 10px', borderRadius: 'var(--radius-pill)', fontSize: 11, fontWeight: 600,
             fontFamily: "'DM Sans', sans-serif", color: 'var(--status-green)',
             background: 'rgba(74,222,128,0.12)', border: '1px solid rgba(74,222,128,0.25)',
+            boxShadow: '0 0 12px rgba(74, 222, 128, 0.2)',
           }}>
             Goal met
           </span>
@@ -366,12 +368,12 @@ function ActiveCampaignCard({ campaign, index, onPostUpdate }) {
             {campaign.fundingPct}%{campaign.goalMet ? ' - Goal met \u2713' : ''}
           </span>
         </div>
-        <div style={{ width: '100%', height: 8, background: 'rgba(255,255,255,0.06)', borderRadius: 'var(--radius-pill)', overflow: 'hidden' }}>
+        <div style={{ width: '100%', height: 10, background: 'rgba(255,255,255,0.06)', borderRadius: 5, overflow: 'hidden' }}>
           <motion.div
             initial={{ width: 0 }}
             animate={{ width: `${campaign.fundingPct}%` }}
             transition={{ duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
-            style={{ height: '100%', background: campaign.fundingBarColor, borderRadius: 'var(--radius-pill)' }}
+            style={{ height: '100%', background: campaign.fundingBarColor, borderRadius: 5, boxShadow: '0 0 12px rgba(212, 168, 67, 0.2)' }}
           />
         </div>
       </div>

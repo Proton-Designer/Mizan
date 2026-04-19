@@ -47,8 +47,9 @@ function UrgentCard({ accentColor, icon: Icon, description, actionLabel, linkTo 
       style={{
         minWidth: 220, maxWidth: 220, height: 80,
         display: 'flex', alignItems: 'center', gap: 10,
-        background: 'var(--bg-surface)',
-        border: '1px solid var(--border-default)',
+        background: 'rgba(22, 22, 31, 0.55)',
+        backdropFilter: 'blur(8px)',
+        border: '1px solid rgba(240, 237, 232, 0.06)',
         borderRadius: 12,
         overflow: 'hidden',
         flexShrink: 0,
@@ -264,7 +265,14 @@ export default function CommunityDashboard() {
   /*  Render                                                           */
   /* ---------------------------------------------------------------- */
   return (
-    <div style={styles.page}>
+    <div style={{ ...styles.page, position: 'relative' }}>
+
+      {/* Green gradient mesh */}
+      <div style={{
+        position: 'absolute', top: 0, left: 0, right: 0, height: 350,
+        background: 'radial-gradient(ellipse 55% 45% at 40% 0%, rgba(74, 222, 128, 0.06) 0%, transparent 70%)',
+        pointerEvents: 'none', zIndex: 0,
+      }} />
 
       {/* ============================================================ */}
       {/*  BAND 1 — Urgent Actions Strip                               */}
@@ -312,7 +320,7 @@ export default function CommunityDashboard() {
           display: 'flex', justifyContent: 'space-around', flexWrap: 'wrap', gap: 24,
         }}>
           {/* Gauge 1: Congregation Health */}
-          <div style={{ textAlign: 'center', width: 180 }}>
+          <div style={{ textAlign: 'center', width: 180, background: 'rgba(22, 22, 31, 0.55)', backdropFilter: 'blur(16px)', border: '1px solid rgba(74, 173, 164, 0.08)', borderRadius: 20, padding: '24px 20px' }}>
             <div style={{ width: 180, height: 180, margin: '0 auto' }}>
               <CircularProgressbar
                 value={healthAnimated}
@@ -341,7 +349,7 @@ export default function CommunityDashboard() {
           </div>
 
           {/* Gauge 2: Zakat Distribution */}
-          <div style={{ textAlign: 'center', width: 180 }}>
+          <div style={{ textAlign: 'center', width: 180, background: 'rgba(22, 22, 31, 0.55)', backdropFilter: 'blur(16px)', border: '1px solid rgba(74, 173, 164, 0.08)', borderRadius: 20, padding: '24px 20px' }}>
             <div style={{ width: 180, height: 180, margin: '0 auto' }}>
               <CircularProgressbar
                 value={zakatAnimated}
@@ -370,7 +378,7 @@ export default function CommunityDashboard() {
           </div>
 
           {/* Gauge 3: Welfare Resolution Rate */}
-          <div style={{ textAlign: 'center', width: 180 }}>
+          <div style={{ textAlign: 'center', width: 180, background: 'rgba(22, 22, 31, 0.55)', backdropFilter: 'blur(16px)', border: '1px solid rgba(74, 173, 164, 0.08)', borderRadius: 20, padding: '24px 20px' }}>
             <div style={{ width: 180, height: 180, margin: '0 auto' }}>
               <CircularProgressbar
                 value={welfareAnimated}
@@ -410,7 +418,7 @@ export default function CommunityDashboard() {
         style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}
       >
         {/* LEFT — Activity Timeline (55%) */}
-        <div style={{ ...styles.card, flex: '1 1 55%', minWidth: 340 }}>
+        <div style={{ ...styles.card, flex: '1 1 55%', minWidth: 340, background: 'rgba(22, 22, 31, 0.45)', backdropFilter: 'blur(12px)', border: '1px solid rgba(240, 237, 232, 0.06)', borderRadius: 20, padding: 24 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 18 }}>
             <Activity size={18} style={{ color: 'var(--teal-light)' }} />
             <h2 style={{ ...styles.sectionTitle, margin: 0 }}>Activity Timeline</h2>
@@ -430,7 +438,7 @@ export default function CommunityDashboard() {
         </div>
 
         {/* RIGHT — Zakat Intelligence Panel (45%) */}
-        <div style={{ ...styles.card, flex: '1 1 40%', minWidth: 300 }}>
+        <div style={{ ...styles.card, flex: '1 1 40%', minWidth: 300, background: 'rgba(22, 22, 31, 0.55)', backdropFilter: 'blur(16px)', border: '1px solid rgba(212, 168, 67, 0.1)', borderRadius: 20 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 18 }}>
             <Scale size={18} style={{ color: 'var(--gold-mid)' }} />
             <h2 style={{ ...styles.sectionTitle, margin: 0 }}>Zakat Intelligence</h2>

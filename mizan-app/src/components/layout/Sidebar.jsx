@@ -204,9 +204,9 @@ function AccountSummaryCard({ accountType, portfolio }) {
   if (accountType === 'community') {
     return (
       <div style={cardStyle}>
-        <span style={labelStyle}>Community</span>
+        <span style={labelStyle}>Congregation</span>
         <span style={valueStyle}>
-          Health: {accentSpan('78/100')} {' \u00B7 '} Zakat: {accentSpan('$3,600')} remaining
+          Zakat pool: {accentSpan('$3,600')} remaining
         </span>
       </div>
     )
@@ -335,6 +335,9 @@ export default function Sidebar({ accountType }) {
 
   // Hover state tracking for nav items
   const [hoveredTab, setHoveredTab] = useState(null)
+  // Add funds modal
+  const [showAddFunds, setShowAddFunds] = useState(false)
+  const [addFundsAmount, setAddFundsAmount] = useState('')
 
   return (
     <aside style={styles.sidebar}>
@@ -363,15 +366,98 @@ export default function Sidebar({ accountType }) {
                 ${portfolio.committedCapital.toLocaleString()}
               </span>
 
-              <motion.button
-                onClick={() => portfolio.addFunds(500)}
-                style={styles.addFundsButton}
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-                transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-              >
-                Add Funds
-              </motion.button>
+              {!showAddFunds ? (
+                <motion.button
+                  onClick={() => { setShowAddFunds(true); setAddFundsAmount('') }}
+                  style={styles.addFundsButton}
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+                >
+                  Add Funds
+                </motion.button>
+              ) : (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  style={{ marginTop: 8, overflow: 'hidden' }}
+                >
+                  <div style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
+                    <input
+                      type="number"
+                      placeholder="Amount"
+                      value={addFundsAmount}
+                      onChange={(e) => setAddFundsAmount(e.target.value)}
+                      autoFocus
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && addFundsAmount && parseFloat(addFundsAmount) > 0) {
+                          portfolio.addFunds(parseFloat(addFundsAmount))
+                          setShowAddFunds(false)
+                          setAddFundsAmount('')
+                        }
+                        if (e.key === 'Escape') { setShowAddFunds(false) }
+                      }}
+                      style={{
+                        flex: 1, height: 34, padding: '0 10px',
+                        background: 'var(--bg-deep)', color: 'var(--text-primary)',
+                        border: '1px solid var(--border-default)',
+                        borderRadius: 'var(--radius-sm)', fontSize: 14,
+                        fontFamily: "'DM Sans', sans-serif", outline: 'none',
+                      }}
+                    />
+                    <button
+                      onClick={() => {
+                        if (addFundsAmount && parseFloat(addFundsAmount) > 0) {
+                          portfolio.addFunds(parseFloat(addFundsAmount))
+                          setShowAddFunds(false)
+                          setAddFundsAmount('')
+                        }
+                      }}
+                      style={{
+                        height: 34, padding: '0 12px',
+                        background: 'var(--gold-mid)', color: 'var(--text-inverse)',
+                        border: 'none', borderRadius: 'var(--radius-sm)',
+                        fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                        fontFamily: "'DM Sans', sans-serif",
+                      }}
+                    >
+                      Add
+                    </button>
+                  </div>
+                  <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                    {[100, 500, 1000, 5000].map((amt) => (
+                      <button
+                        key={amt}
+                        onClick={() => {
+                          portfolio.addFunds(amt)
+                          setShowAddFunds(false)
+                          setAddFundsAmount('')
+                        }}
+                        style={{
+                          padding: '4px 10px', fontSize: 11, fontWeight: 500,
+                          background: 'var(--bg-overlay)', color: 'var(--text-secondary)',
+                          border: '1px solid var(--border-subtle)',
+                          borderRadius: 'var(--radius-pill)', cursor: 'pointer',
+                          fontFamily: "'DM Sans', sans-serif",
+                        }}
+                      >
+                        ${amt.toLocaleString()}
+                      </button>
+                    ))}
+                    <button
+                      onClick={() => setShowAddFunds(false)}
+                      style={{
+                        padding: '4px 10px', fontSize: 11,
+                        background: 'none', color: 'var(--text-tertiary)',
+                        border: 'none', cursor: 'pointer', marginLeft: 'auto',
+                        fontFamily: "'DM Sans', sans-serif",
+                      }}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </motion.div>
+              )}
             </>
           ) : (
             <motion.button
@@ -422,8 +508,8 @@ export default function Sidebar({ accountType }) {
               onMouseLeave={() => setHoveredTab(null)}
               style={{
                 ...styles.tab,
-                height: 36,
-                paddingLeft: 8,
+                height: 44,
+                paddingLeft: 14,
                 borderLeft: isActive ? `3px solid ${accent.color}` : '3px solid transparent',
                 borderRadius: isActive ? '0 var(--radius-sm, 6px) var(--radius-sm, 6px) 0' : 'var(--radius-sm, 6px)',
                 background: isActive
@@ -438,7 +524,7 @@ export default function Sidebar({ accountType }) {
               whileHover={{ scale: 1.01 }}
               transition={{ type: 'spring', stiffness: 400, damping: 25 }}
             >
-              <Icon size={18} style={{ flexShrink: 0 }} />
+              <Icon size={20} style={{ flexShrink: 0 }} />
               <span>{tab.label}</span>
             </motion.button>
           )
@@ -667,7 +753,8 @@ const styles = {
     flex: 1,
     display: 'flex',
     flexDirection: 'column',
-    paddingTop: 8,
+    gap: 2,
+    paddingTop: 12,
     overflowY: 'auto',
     position: 'relative',
     zIndex: 1,
@@ -675,13 +762,13 @@ const styles = {
   tab: {
     display: 'flex',
     alignItems: 'center',
-    gap: 10,
-    padding: '0 8px',
-    margin: '1px 8px',
+    gap: 12,
+    padding: '0 14px',
+    margin: '2px 8px',
     border: 'none',
     cursor: 'pointer',
     fontFamily: "'DM Sans', sans-serif",
-    fontSize: 13,
+    fontSize: 15,
     textAlign: 'left',
     width: 'calc(100% - 16px)',
     boxSizing: 'border-box',

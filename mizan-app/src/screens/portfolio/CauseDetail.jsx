@@ -183,6 +183,17 @@ export default function CauseDetail() {
       {/* ── Header ── */}
       <div
         style={{
+          background: 'rgba(22, 22, 31, 0.55)',
+          backdropFilter: 'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)',
+          border: '1px solid rgba(240, 237, 232, 0.06)',
+          borderRadius: 'var(--radius-xl)',
+          padding: 32,
+          marginBottom: 24,
+        }}
+      >
+      <div
+        style={{
           display: 'flex',
           alignItems: 'flex-start',
           gap: '16px',
@@ -310,6 +321,7 @@ export default function CauseDetail() {
           </Chip>
         ))}
       </div>
+      </div>
 
       {/* ── Campaign Progress ── */}
       {ngo.currentCampaigns && ngo.currentCampaigns.length > 0 && (
@@ -334,8 +346,8 @@ export default function CauseDetail() {
                   <div
                     style={{
                       width: '100%',
-                      height: '8px',
-                      borderRadius: '4px',
+                      height: '10px',
+                      borderRadius: '5px',
                       background: 'var(--bg-overlay, rgba(255,255,255,0.06))',
                       marginBottom: '6px',
                       overflow: 'hidden',
@@ -345,9 +357,10 @@ export default function CauseDetail() {
                       style={{
                         width: `${pct}%`,
                         height: '100%',
-                        borderRadius: '4px',
+                        borderRadius: '5px',
                         background: '#C9A84C',
                         transition: 'width 0.4s ease',
+                        boxShadow: '0 0 12px rgba(212, 168, 67, 0.2)',
                       }}
                     />
                   </div>
@@ -671,10 +684,11 @@ export default function CauseDetail() {
           alignItems: 'center',
           justifyContent: 'center',
           padding: '0 24px',
-          background: 'var(--bg-surface)',
+          background: 'rgba(15, 15, 26, 0.9)',
           backdropFilter: 'blur(16px)',
           WebkitBackdropFilter: 'blur(16px)',
           borderTop: '1px solid var(--border-subtle)',
+          boxShadow: '0 -4px 24px rgba(0,0,0,0.3)',
           zIndex: 100,
         }}
       >

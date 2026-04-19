@@ -496,9 +496,12 @@ export default function LoanApplication() {
                 border: selected ? '2px solid var(--teal-mid)' : '1px solid var(--border-default)',
                 borderRadius: 'var(--radius-md)', cursor: 'pointer',
                 textAlign: 'left', transition: 'all var(--transition-base)',
+                boxShadow: selected
+                  ? '0 0 20px rgba(74, 173, 164, 0.2), inset 0 1px 0 rgba(255,255,255,0.04)'
+                  : 'inset 0 1px 0 rgba(255,255,255,0.04)',
               }}
             >
-              <span style={{ fontSize: 24, display: 'block', marginBottom: 6 }}>{opt.emoji}</span>
+              <span style={{ fontSize: 32, display: 'block', marginBottom: 6 }}>{opt.emoji}</span>
               <span style={{
                 fontFamily: "'DM Sans', sans-serif", fontSize: 14, fontWeight: 600,
                 color: 'var(--text-primary)', display: 'block', marginBottom: 2,
@@ -603,8 +606,9 @@ export default function LoanApplication() {
         <div style={{ position: 'relative', display: 'inline-block' }}>
           <span style={{
             position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)',
-            fontFamily: "'Cormorant Garamond', serif", fontSize: 48,
+            fontFamily: "'Cormorant Garamond', serif", fontSize: 56,
             color: 'var(--teal-mid)', pointerEvents: 'none',
+            textShadow: '0 0 40px rgba(74, 173, 164, 0.2)',
           }}>$</span>
           <input
             type="number"
@@ -612,10 +616,11 @@ export default function LoanApplication() {
             onChange={(e) => updateDraft({ loanAmount: e.target.value === '' ? null : Number(e.target.value) })}
             placeholder="0"
             style={{
-              width: 260, padding: '8px 16px 8px 48px', background: 'transparent',
+              width: 280, padding: '8px 16px 8px 52px', background: 'transparent',
               border: 'none', borderBottom: '2px solid var(--teal-mid)',
               color: 'var(--teal-mid)', fontFamily: "'Cormorant Garamond', serif",
-              fontSize: 48, fontWeight: 600, textAlign: 'center', outline: 'none',
+              fontSize: 56, fontWeight: 600, textAlign: 'center', outline: 'none',
+              textShadow: '0 0 40px rgba(74, 173, 164, 0.2)',
             }}
           />
         </div>
@@ -628,10 +633,13 @@ export default function LoanApplication() {
             key={a}
             onClick={() => updateDraft({ loanAmount: a })}
             style={{
-              padding: '8px 18px', background: loanDraft.loanAmount === a ? 'var(--teal-mid)' : 'var(--bg-elevated)',
-              color: loanDraft.loanAmount === a ? 'var(--text-inverse)' : 'var(--text-secondary)',
-              border: '1px solid var(--border-default)', borderRadius: 20,
+              padding: '8px 18px',
+              background: loanDraft.loanAmount === a ? 'rgba(74, 173, 164, 0.15)' : 'rgba(22, 22, 31, 0.6)',
+              color: loanDraft.loanAmount === a ? 'var(--teal-mid)' : 'var(--text-secondary)',
+              border: loanDraft.loanAmount === a ? '1px solid var(--teal-mid)' : '1px solid rgba(240, 237, 232, 0.08)',
+              borderRadius: 20,
               fontFamily: "'DM Sans', sans-serif", fontSize: 14, fontWeight: 500, cursor: 'pointer',
+              boxShadow: loanDraft.loanAmount === a ? '0 0 12px rgba(74, 173, 164, 0.2)' : 'none',
             }}
           >
             ${a.toLocaleString()}
@@ -862,28 +870,33 @@ export default function LoanApplication() {
         >
           <div style={{
             fontFamily: "'DM Sans', sans-serif", fontSize: 13, fontWeight: 600,
-            color: 'var(--text-secondary)', marginBottom: 8,
+            color: 'var(--text-secondary)', marginBottom: 12,
           }}>Need Score</div>
-          <div style={{
-            height: 8, background: 'var(--bg-overlay)', borderRadius: 4, overflow: 'hidden', marginBottom: 8,
-          }}>
-            <motion.div
-              initial={{ width: 0 }}
-              animate={{ width: `${Math.round(needResult.score)}%` }}
-              transition={{ duration: 0.6, ease: 'easeOut' }}
-              style={{
-                height: '100%', borderRadius: 4,
-                background: needResult.score >= 65 ? 'var(--teal-mid)' : needResult.score >= 40 ? '#fbbf24' : '#f87171',
-              }}
-            />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 8 }}>
+            <div style={{
+              flex: 1, height: 12, background: 'var(--bg-overlay)', borderRadius: 6, overflow: 'hidden',
+            }}>
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${Math.round(needResult.score)}%` }}
+                transition={{ duration: 0.6, ease: 'easeOut' }}
+                style={{
+                  height: '100%', borderRadius: 6,
+                  background: needResult.score >= 65 ? 'var(--teal-mid)' : needResult.score >= 40 ? '#fbbf24' : '#f87171',
+                  boxShadow: '0 0 16px rgba(74, 173, 164, 0.3)',
+                }}
+              />
+            </div>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 2 }}>
+              <span style={{
+                fontFamily: "'Cormorant Garamond', serif", fontSize: 36, fontWeight: 600,
+                color: 'var(--text-primary)',
+              }}>{Math.round(needResult.score)}</span>
+              <span style={{
+                fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: 'var(--text-tertiary)',
+              }}>/ 100</span>
+            </div>
           </div>
-          <span style={{
-            fontFamily: "'DM Sans', sans-serif", fontSize: 24, fontWeight: 700,
-            color: 'var(--text-primary)',
-          }}>{Math.round(needResult.score)}</span>
-          <span style={{
-            fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: 'var(--text-tertiary)', marginLeft: 4,
-          }}>/ 100</span>
 
           {feasibility && (
             <div style={{
@@ -1398,6 +1411,7 @@ export default function LoanApplication() {
               padding: '16px 20px', background: 'var(--bg-elevated)',
               border: '1px solid var(--border-default)', borderRadius: 'var(--radius-md)',
               marginBottom: 12,
+              borderBottom: '1px solid var(--border-subtle)',
             }}
           >
             <div style={{
@@ -1409,9 +1423,12 @@ export default function LoanApplication() {
               }}>{section.title}</h3>
               <button
                 onClick={() => goToStep(section.step)}
+                onMouseEnter={(e) => e.target.style.textDecoration = 'underline'}
+                onMouseLeave={(e) => e.target.style.textDecoration = 'none'}
                 style={{
                   background: 'none', border: 'none', color: 'var(--teal-mid)',
                   fontFamily: "'DM Sans', sans-serif", fontSize: 13, cursor: 'pointer',
+                  textDecoration: 'none', transition: 'text-decoration 0.2s ease',
                 }}
               >
                 Edit &rarr;
@@ -1436,9 +1453,11 @@ export default function LoanApplication() {
 
         {/* Algorithm preview */}
         <div style={{
-          padding: '20px', background: 'rgba(74,173,164,0.06)',
-          border: '1px solid rgba(74,173,164,0.15)', borderRadius: 'var(--radius-md)',
+          padding: '20px', background: 'rgba(22, 22, 31, 0.55)',
+          border: '1px solid rgba(212, 168, 67, 0.15)', borderRadius: 'var(--radius-md)',
           marginBottom: 24,
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
         }}>
           <h3 style={{
             fontFamily: "'DM Sans', sans-serif", fontSize: 14, fontWeight: 700,
@@ -1512,12 +1531,15 @@ export default function LoanApplication() {
         <button
           onClick={handleSubmit}
           style={{
-            width: '100%', padding: '16px 24px', background: 'var(--teal-mid)',
+            width: '100%', height: 56, padding: '0 24px',
+            background: 'linear-gradient(135deg, #2D7A73, #4AADA4)',
             color: 'var(--text-inverse)', border: 'none', borderRadius: 'var(--radius-md)',
-            fontFamily: "'DM Sans', sans-serif", fontSize: 16, fontWeight: 600,
+            fontFamily: "'DM Sans', sans-serif", fontSize: 17, fontWeight: 600,
+            letterSpacing: '0.02em',
             cursor: 'pointer', display: 'flex', alignItems: 'center',
             justifyContent: 'center', gap: 8,
             transition: 'all var(--transition-base)',
+            boxShadow: '0 4px 24px rgba(74, 173, 164, 0.3), 0 0 60px rgba(74, 173, 164, 0.08)',
           }}
         >
           Submit my application <ArrowRight size={18} />
@@ -1618,7 +1640,15 @@ export default function LoanApplication() {
       <ProgressBar currentStep={currentStep} totalSteps={6} />
 
       {/* Step content */}
-      <div style={{ marginTop: 32, position: 'relative', overflow: 'hidden' }}>
+      <div style={{
+        marginTop: 32, position: 'relative', overflow: 'hidden',
+        background: 'rgba(22, 22, 31, 0.5)',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
+        border: '1px solid rgba(74, 173, 164, 0.08)',
+        borderRadius: 20,
+        padding: '32px 28px',
+      }}>
         <AnimatePresence mode="wait" custom={direction}>
           <motion.div
             key={currentStep}

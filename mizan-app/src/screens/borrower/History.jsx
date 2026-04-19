@@ -41,7 +41,10 @@ function TrustStars({ level, max = 5 }) {
   return (
     <span style={{ fontSize: 28, letterSpacing: 2 }}>
       {Array.from({ length: max }, (_, i) => (
-        <span key={i} style={{ color: i < level ? 'var(--gold-mid)' : 'var(--text-tertiary)' }}>
+        <span key={i} style={{
+          color: i < level ? 'var(--gold-mid)' : 'var(--text-tertiary)',
+          ...(i < level ? { textShadow: '0 0 8px rgba(212, 168, 67, 0.4)' } : {}),
+        }}>
           {i < level ? '\u2605' : '\u2606'}
         </span>
       ))}
@@ -77,8 +80,10 @@ export default function History() {
 
   // Card base style
   const card = {
-    background: 'var(--bg-surface)',
-    border: '1px solid var(--border-default)',
+    background: 'rgba(22, 22, 31, 0.5)',
+    backdropFilter: 'blur(8px)',
+    WebkitBackdropFilter: 'blur(8px)',
+    border: '1px solid rgba(240, 237, 232, 0.06)',
     borderRadius: 'var(--radius-md)',
     padding: '20px 24px',
   }
@@ -93,6 +98,10 @@ export default function History() {
       {/* ============ Trust Level Card (full-width) ============ */}
       <div style={{
         ...card,
+        background: 'radial-gradient(ellipse at 30% 50%, rgba(212, 168, 67, 0.06) 0%, transparent 60%), rgba(22, 22, 31, 0.55)',
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
+        border: '1px solid rgba(212, 168, 67, 0.1)',
         marginBottom: 28,
         padding: 0,
         overflow: 'hidden',

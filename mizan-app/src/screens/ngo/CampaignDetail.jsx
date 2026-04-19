@@ -263,7 +263,7 @@ function StatChip({ icon, value, label, color = 'var(--text-primary)' }) {
     <div style={{
       display: 'inline-flex', alignItems: 'center', gap: 6,
       padding: '6px 14px', borderRadius: 'var(--radius-pill)',
-      background: 'var(--bg-surface)', border: '1px solid var(--border-subtle)',
+      background: 'rgba(22, 22, 31, 0.5)', border: '1px solid rgba(240, 237, 232, 0.06)',
       fontFamily: "'DM Sans', sans-serif", fontSize: 13,
     }}>
       <span style={{ color: 'var(--text-tertiary)' }}>{icon}</span>
@@ -330,8 +330,9 @@ export default function CampaignDetail() {
 
           {/* Large Funding Bar */}
           <div style={{
-            background: 'var(--bg-surface)', borderRadius: 'var(--radius-lg)',
-            boxShadow: 'var(--shadow-card)', padding: 24, marginBottom: 20,
+            background: 'rgba(22, 22, 31, 0.55)', borderRadius: 20,
+            backdropFilter: 'blur(12px)',
+            boxShadow: 'var(--shadow-card)', padding: 28, marginBottom: 20,
             border: '1px solid var(--border-subtle)',
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 10 }}>
@@ -501,9 +502,10 @@ export default function CampaignDetail() {
 
           {/* Campaign Stats Card */}
           <div style={{
-            background: 'var(--bg-surface)', borderRadius: 'var(--radius-lg)',
+            background: 'rgba(22, 22, 31, 0.55)', borderRadius: 'var(--radius-lg)',
+            backdropFilter: 'blur(12px)',
             boxShadow: 'var(--shadow-card)', padding: 24, marginBottom: 16,
-            border: '1px solid var(--border-subtle)',
+            border: '1px solid rgba(240, 237, 232, 0.06)',
           }}>
             <h3 style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, fontWeight: 600, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 16px 0' }}>
               Campaign Stats
@@ -519,9 +521,10 @@ export default function CampaignDetail() {
 
           {/* Discover Ranking */}
           <div style={{
-            background: 'var(--bg-surface)', borderRadius: 'var(--radius-lg)',
+            background: 'rgba(22, 22, 31, 0.55)', borderRadius: 'var(--radius-lg)',
+            backdropFilter: 'blur(12px)',
             boxShadow: 'var(--shadow-card)', padding: 20, marginBottom: 16,
-            border: '1px solid var(--border-subtle)',
+            border: '1px solid rgba(240, 237, 232, 0.06)',
             display: 'flex', alignItems: 'center', gap: 14,
           }}>
             <div style={{
@@ -544,9 +547,10 @@ export default function CampaignDetail() {
 
           {/* Settlement Tracking */}
           <div style={{
-            background: 'var(--bg-surface)', borderRadius: 'var(--radius-lg)',
+            background: 'rgba(22, 22, 31, 0.55)', borderRadius: 'var(--radius-lg)',
+            backdropFilter: 'blur(12px)',
             boxShadow: 'var(--shadow-card)', padding: 20, marginBottom: 16,
-            border: '1px solid var(--border-subtle)',
+            border: '1px solid rgba(240, 237, 232, 0.06)',
           }}>
             <h3 style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, fontWeight: 600, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 14px 0' }}>
               Next Settlement
@@ -569,9 +573,10 @@ export default function CampaignDetail() {
 
           {/* Quick Actions */}
           <div style={{
-            background: 'var(--bg-surface)', borderRadius: 'var(--radius-lg)',
+            background: 'rgba(22, 22, 31, 0.55)', borderRadius: 'var(--radius-lg)',
+            backdropFilter: 'blur(12px)',
             boxShadow: 'var(--shadow-card)', padding: 20,
-            border: '1px solid var(--border-subtle)',
+            border: '1px solid rgba(240, 237, 232, 0.06)',
           }}>
             <h3 style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, fontWeight: 600, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 14px 0' }}>
               Quick Actions

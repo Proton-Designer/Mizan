@@ -196,11 +196,11 @@ export default function Review() {
         {/* ================================================================ */}
         {/* Step Tracker                                                     */}
         {/* ================================================================ */}
-        <Card style={{ marginBottom: 24 }}>
+        <Card variant="glass" style={{ marginBottom: 24 }}>
           <div style={{ padding: '4px 0' }}>
             {steps.map((step, i) => (
               <div key={i}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '14px 0' }}>
                   <StepCircle state={step.state} />
                   <div style={{ flex: 1 }}>
                     <p style={{
@@ -239,12 +239,13 @@ export default function Review() {
         {/* Processing indicator */}
         {simulating && (
           <div style={{
-            padding: '16px 20px',
+            padding: '20px 24px',
             background: 'var(--teal-glow)',
             border: '1px solid var(--teal-deep)',
             borderRadius: 'var(--radius-lg)',
             marginBottom: 16,
             display: 'flex', alignItems: 'center', gap: 12,
+            boxShadow: '0 0 30px rgba(74, 173, 164, 0.1)',
           }}>
             <motion.div
               animate={{ rotate: 360 }}
@@ -267,7 +268,7 @@ export default function Review() {
         {/* ================================================================ */}
         {/* Estimated Timeline                                              */}
         {/* ================================================================ */}
-        <Card style={{ marginBottom: 24 }}>
+        <Card variant="glass" style={{ marginBottom: 24 }}>
           <p style={{
             fontSize: 11, fontWeight: 500, textTransform: 'uppercase',
             letterSpacing: '0.06em', color: 'var(--text-tertiary)',
@@ -309,7 +310,7 @@ export default function Review() {
         {/* ================================================================ */}
         {/* Request Summary                                                 */}
         {/* ================================================================ */}
-        <Card style={{ marginBottom: 24 }}>
+        <Card variant="glass" style={{ marginBottom: 24 }}>
           <p style={{
             fontSize: 11, fontWeight: 500, textTransform: 'uppercase',
             letterSpacing: '0.06em', color: 'var(--text-tertiary)',
