@@ -9,7 +9,7 @@ import PortfolioJourney from '../screens/portfolio/Journey'
 import PortfolioJourneyPosition from '../screens/portfolio/JourneyPosition'
 import PortfolioDiscover from '../screens/portfolio/Discover'
 import PortfolioCauseDetail from '../screens/portfolio/CauseDetail'
-import BorrowerRouter from '../screens/borrower/BorrowerRouter'
+import BorrowerHome from '../screens/borrower/BorrowerHome'
 import BorrowerIntake from '../screens/borrower/Intake'
 import BorrowerIntakeConfirm from '../screens/borrower/IntakeConfirm'
 import BorrowerIntakeQuick from '../screens/borrower/IntakeQuick'
@@ -66,7 +66,7 @@ export const router = createBrowserRouter([
     path: '/borrower',
     element: <AppShell accountType="borrower" />,
     children: [
-      { index: true, element: <BorrowerRouter /> },
+      { index: true, element: <BorrowerHome /> },
       { path: 'intake', element: <BorrowerIntake /> },
       { path: 'intake/confirm', element: <BorrowerIntakeConfirm /> },
       { path: 'intake/quick', element: <BorrowerIntakeQuick /> },
