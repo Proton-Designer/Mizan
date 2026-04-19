@@ -135,7 +135,7 @@ function ImpactPreview({ amount, investType, cycles, splitPercent, ngo }) {
     if (investType === 'direct') {
       return computeImpactPreview(amount, 'direct', 0, 100, ngo)
     }
-    if (cycles === null) {
+    if (investType === 'jariyah') {
       return computeImpactPreview(amount, 'jariyah', null, 100, ngo)
     }
     return computeImpactPreview(amount, 'compound', cycles, splitPercent, ngo)
@@ -147,9 +147,9 @@ function ImpactPreview({ amount, investType, cycles, splitPercent, ngo }) {
   if (investType === 'direct') {
     const meals = preview.familiesTotal
     text = `${fmtDollars(amount)} \u2192 ${ngo.name} \u2192 ${meals} ${ngo.impactUnit || 'meals'} funded \u2192 Delivered today`
-  } else if (cycles === null) {
+  } else if (investType === 'jariyah') {
     const tier = amount <= 500 ? 3 : amount <= 2000 ? 5 : 8
-    text = `A family helped every ~${tier} months, forever.`
+    text = `A family helped every ~${tier} months, forever. Perpetual sadaqah jariyah.`
   } else {
     text = `~${preview.familiesTotal} families helped over ~${preview.estimatedMonths} months, total good: ${fmtDollars(preview.totalRealWorldGood)}`
   }
@@ -244,13 +244,15 @@ export default function InvestModal() {
   /* ── Build the step sequence based on invest type ── */
   const steps = useMemo(() => {
     const s = []
-    if (!skipCauseSelection) s.push('cause')       // Step: Cause Selection
+    if (!skipCauseSelection) s.push('cause')       // Step: Choose a Cause OR Jariyah
+    // If jariyah, skip type selection (no cause needed)
+    if (investType !== 'jariyah') {
+      s.push('type')                                // Step: Direct / Compound
+    }
     s.push('amount')                                // Step: Amount
-    s.push('type')                                  // Step: Direct or Compound
-    // Compound-only steps added dynamically after type selection
+    // Compound-only: combined pool analysis + cycles + split
     if (investType === 'compound') {
-      s.push('algorithm')                           // Step: Algorithm Output
-      s.push('cycles')                              // Step: Cycles & Split
+      s.push('compound_details')                    // Step: Pool Analysis + Cycles + Split
     }
     s.push('vault')                                 // Step: Vault Tag
     s.push('confirm')                               // Step: Confirm
@@ -290,17 +292,16 @@ export default function InvestModal() {
     if (selectedNgo && investType === null) {
       if (selectedNgo.urgencyScore > 0.7) {
         setInvestType('direct')
-      } else {
-        setInvestType('compound')
       }
+      // Don't auto-select compound — let user choose between compound and jariyah
     }
   }, [selectedNgo, investType])
 
-  /* ── Run algorithm computation when entering algorithm step ── */
+  /* ── Run algorithm computation when entering compound_details step ── */
   const computeTimerRef = useRef(null)
   useEffect(() => {
-    // Only trigger when we land on the algorithm step with no result yet
-    if (currentStepName !== 'algorithm') return
+    // Only trigger when we land on the compound_details step with no result yet
+    if (currentStepName !== 'compound_details') return
     if (algorithmResult || isComputing) return
 
     setIsComputing(true)
@@ -342,15 +343,13 @@ export default function InvestModal() {
   const canContinue = useMemo(() => {
     switch (currentStepName) {
       case 'cause':
-        return !!selectedNgo
+        return !!selectedNgo || investType === 'jariyah'
+      case 'type':
+        return investType === 'direct' || investType === 'compound'
       case 'amount':
         return amountNum > 0 && amountNum <= bankBalance
-      case 'type':
-        return !!investType
-      case 'algorithm':
+      case 'compound_details':
         return !isComputing && !!algorithmResult
-      case 'cycles':
-        return true
       case 'vault':
         return true
       case 'confirm':
@@ -367,6 +366,8 @@ export default function InvestModal() {
     let result
     if (investType === 'direct') {
       result = investDirect(amountNum, selectedNgo)
+    } else if (investType === 'jariyah') {
+      result = investCompound(amountNum, selectedNgo, null, 100) // null cycles = perpetual
     } else {
       result = investCompound(amountNum, selectedNgo, cycles, splitPercent)
     }
@@ -380,17 +381,19 @@ export default function InvestModal() {
       incrementStreak()
 
       // Build reflection data
+      // For jariyah without a cause, use a fallback ngo object for preview
+      const ngoForPreview = selectedNgo || { id: 'jariyah-pool', name: 'Qard Hassan Pool', impactPerDollar: 2, impactUnit: 'families', category: 'community' }
       const preview = investType === 'direct'
-        ? computeImpactPreview(amountNum, 'direct', 0, 100, selectedNgo)
-        : cycles === null
-          ? computeImpactPreview(amountNum, 'jariyah', null, 100, selectedNgo)
-          : computeImpactPreview(amountNum, 'compound', cycles, splitPercent, selectedNgo)
+        ? computeImpactPreview(amountNum, 'direct', 0, 100, ngoForPreview)
+        : investType === 'jariyah'
+          ? computeImpactPreview(amountNum, 'jariyah', null, 100, ngoForPreview)
+          : computeImpactPreview(amountNum, 'compound', cycles, splitPercent, ngoForPreview)
 
       setReflectionData({
         type: investType,
         amount: amountNum,
-        ngoName: selectedNgo.name,
-        ngoId: selectedNgo.id,
+        ngoName: selectedNgo?.name || 'Qard Hassan Pool (Jariyah)',
+        ngoId: selectedNgo?.id || 'jariyah-pool',
         cycles,
         splitPercent,
         familiesTotal: preview.familiesTotal,
@@ -658,6 +661,58 @@ export default function InvestModal() {
                     </p>
                   )}
                 </div>
+
+                {/* ── OR: Jariyah (perpetual sadaqah, no specific cause) ── */}
+                <div style={{
+                  marginTop: 'var(--space-xl)',
+                  borderTop: '1px solid var(--border-subtle)',
+                  paddingTop: 'var(--space-lg)',
+                }}>
+                  <p style={{ ...styles.subtext, textAlign: 'center', marginBottom: 'var(--space-md)', fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-tertiary)' }}>
+                    Or give without a specific cause
+                  </p>
+                  <motion.button
+                    whileHover={{ scale: 1.01 }}
+                    whileTap={{ scale: 0.99 }}
+                    onClick={() => {
+                      setInvestType('jariyah')
+                      setCycles(null)
+                      setSplitPercent(100)
+                      setSelectedNgo(null)
+                      setDirection(1)
+                      setStep((s) => s + 1)
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: 'var(--space-lg) var(--space-xl)',
+                      background: 'rgba(74, 222, 128, 0.06)',
+                      border: '1px solid rgba(74, 222, 128, 0.25)',
+                      borderRadius: 'var(--radius-lg)',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 'var(--space-md)',
+                      textAlign: 'left',
+                    }}
+                  >
+                    <div style={{
+                      width: 44, height: 44, borderRadius: '50%',
+                      background: 'rgba(74, 222, 128, 0.12)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                    }}>
+                      <Infinity size={22} color="var(--status-green)" />
+                    </div>
+                    <div>
+                      <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 18, fontWeight: 600, color: 'var(--status-green)', display: 'block' }}>
+                        Infinite Jariyah
+                      </span>
+                      <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.4, display: 'block', marginTop: 2 }}>
+                        Your money cycles through qard hassan loans forever — perpetual sadaqah jariyah with no end date
+                      </span>
+                    </div>
+                    <ChevronRight size={16} color="var(--text-tertiary)" style={{ flexShrink: 0, marginLeft: 'auto' }} />
+                  </motion.button>
+                </div>
               </motion.div>
             )}
 
@@ -785,7 +840,7 @@ export default function InvestModal() {
             )}
 
             {/* ─────────────────────────────────────
-               STEP: DIRECT OR COMPOUND
+               STEP: GIVING MODE (Direct / Compound)
                ───────────────────────────────────── */}
             {currentStepName === 'type' && (
               <motion.div
@@ -798,400 +853,198 @@ export default function InvestModal() {
                 transition={{ duration: 0.25, ease: 'easeInOut' }}
               >
                 <h2 style={styles.heading}>How should it flow?</h2>
-                <p style={styles.subtext}>Choose how your giving reaches the cause</p>
+                <p style={styles.subtext}>Choose how your giving reaches {selectedNgo?.name || 'the cause'}</p>
 
                 <div style={{ display: 'flex', gap: 'var(--space-md)', marginTop: 'var(--space-xl)' }}>
-                  {/* Direct Card */}
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => {
-                      setInvestType('direct')
-                      setAlgorithmResult(null)
-                    }}
-                    style={{
-                      flex: 1,
-                      padding: 'var(--space-xl) var(--space-md)',
-                      background: investType === 'direct'
-                        ? 'rgba(96, 165, 250, 0.1)'
-                        : 'var(--bg-elevated)',
-                      border: investType === 'direct'
-                        ? '2px solid var(--status-blue)'
-                        : '1px solid var(--border-subtle)',
-                      borderRadius: 'var(--radius-lg)',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      gap: 'var(--space-md)',
-                      textAlign: 'center',
-                    }}
-                  >
-                    <div
-                      style={{
-                        width: 48,
-                        height: 48,
-                        borderRadius: '50%',
-                        background: investType === 'direct'
-                          ? 'rgba(96, 165, 250, 0.15)'
-                          : 'var(--bg-overlay)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <ArrowRight size={22} color={investType === 'direct' ? 'var(--status-blue)' : 'var(--text-tertiary)'} />
-                    </div>
-                    <span
-                      style={{
-                        fontFamily: "'Cormorant Garamond', serif",
-                        fontSize: 20,
-                        fontWeight: 600,
-                        color: investType === 'direct' ? 'var(--status-blue)' : 'var(--text-primary)',
-                      }}
-                    >
-                      Direct
-                    </span>
-                    <span
-                      style={{
-                        fontFamily: "'DM Sans', sans-serif",
-                        fontSize: 13,
-                        color: 'var(--text-secondary)',
-                        lineHeight: 1.5,
-                      }}
-                    >
-                      Money reaches the cause today
-                    </span>
-                    {investType === 'direct' && (
-                      <motion.div
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        style={{
-                          width: 20,
-                          height: 20,
-                          borderRadius: '50%',
-                          background: 'var(--status-blue)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                        }}
-                      >
-                        <Check size={12} color="var(--text-inverse)" />
-                      </motion.div>
-                    )}
-                  </motion.button>
-
-                  {/* Compound Card */}
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => {
-                      setInvestType('compound')
-                      setAlgorithmResult(null)
-                    }}
-                    style={{
-                      flex: 1,
-                      padding: 'var(--space-xl) var(--space-md)',
-                      background: investType === 'compound'
-                        ? 'var(--gold-glow)'
-                        : 'var(--bg-elevated)',
-                      border: investType === 'compound'
-                        ? '2px solid var(--gold-mid)'
-                        : '1px solid var(--border-subtle)',
-                      borderRadius: 'var(--radius-lg)',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      gap: 'var(--space-md)',
-                      textAlign: 'center',
-                    }}
-                  >
-                    <div
-                      style={{
-                        width: 48,
-                        height: 48,
-                        borderRadius: '50%',
-                        background: investType === 'compound'
-                          ? 'var(--gold-glow-strong)'
-                          : 'var(--bg-overlay)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <RefreshCw size={22} color={investType === 'compound' ? 'var(--gold-mid)' : 'var(--text-tertiary)'} />
-                    </div>
-                    <span
-                      style={{
-                        fontFamily: "'Cormorant Garamond', serif",
-                        fontSize: 20,
-                        fontWeight: 600,
-                        color: investType === 'compound' ? 'var(--text-gold)' : 'var(--text-primary)',
-                      }}
-                    >
-                      Compound
-                    </span>
-                    <span
-                      style={{
-                        fontFamily: "'DM Sans', sans-serif",
-                        fontSize: 13,
-                        color: 'var(--text-secondary)',
-                        lineHeight: 1.5,
-                      }}
-                    >
-                      Money works through qard hassan loans first
-                    </span>
-                    {investType === 'compound' && (
-                      <motion.div
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        style={{
-                          width: 20,
-                          height: 20,
-                          borderRadius: '50%',
-                          background: 'var(--gold-mid)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                        }}
-                      >
-                        <Check size={12} color="var(--text-inverse)" />
-                      </motion.div>
-                    )}
-                  </motion.button>
-                </div>
-              </motion.div>
-            )}
-
-            {/* ─────────────────────────────────────
-               STEP: ALGORITHM OUTPUT (Compound only)
-               ───────────────────────────────────── */}
-            {currentStepName === 'algorithm' && (
-              <motion.div
-                key="algorithm"
-                custom={direction}
-                variants={stepVariants}
-                initial="enter"
-                animate="center"
-                exit="exit"
-                transition={{ duration: 0.25, ease: 'easeInOut' }}
-              >
-                <h2 style={styles.heading}>Pool Analysis</h2>
-                <p style={styles.subtext}>Computing how your money will be deployed...</p>
-
-                {isComputing ? (
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: 'var(--space-2xl) 0' }}>
-                    <motion.div
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                    >
-                      <Loader2 size={32} color="var(--gold-mid)" />
-                    </motion.div>
-                    <p style={{ ...styles.subtext, marginTop: 'var(--space-md)' }}>Computing...</p>
-                  </div>
-                ) : algorithmResult ? (
-                  <motion.div
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    style={{
-                      background: 'var(--bg-elevated)',
-                      border: '1px solid var(--border-default)',
-                      borderRadius: 'var(--radius-lg)',
-                      padding: 'var(--space-xl)',
-                      marginTop: 'var(--space-lg)',
-                    }}
-                  >
-                    <p
-                      style={{
-                        fontFamily: "'DM Sans', sans-serif",
-                        fontSize: 13,
-                        color: 'var(--text-secondary)',
-                        margin: '0 0 var(--space-lg) 0',
-                      }}
-                    >
-                      Based on current pool demand:
-                    </p>
-
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-md)' }}>
-                      <div>
-                        <p style={styles.metricLabel}>Cycle Time Estimate</p>
-                        <p style={styles.metricValue}>
-                          {algorithmResult.rangeMin}&ndash;{algorithmResult.rangeMax} months
-                        </p>
-                      </div>
-                      <div>
-                        <p style={styles.metricLabel}>Families Per Cycle</p>
-                        <p style={styles.metricValue}>{algorithmResult.familiesPerCycle}</p>
-                      </div>
-                    </div>
-
-                    {/* Deployment shape */}
-                    <div style={{ marginTop: 'var(--space-lg)' }}>
-                      <p style={styles.metricLabel}>Deployment Shape</p>
-                      <div style={{ display: 'flex', gap: 'var(--space-md)', marginTop: 'var(--space-sm)' }}>
-                        {[
-                          { label: 'Micro', count: algorithmResult.deploymentShape.micro, color: 'var(--status-green)' },
-                          { label: 'Standard', count: algorithmResult.deploymentShape.standard, color: 'var(--status-blue)' },
-                          { label: 'Major', count: algorithmResult.deploymentShape.major, color: 'var(--gold-mid)' },
-                        ].map((tier) => (
-                          <div
-                            key={tier.label}
-                            style={{
-                              flex: 1,
-                              padding: 'var(--space-sm)',
-                              background: 'var(--bg-surface)',
-                              borderRadius: 'var(--radius-sm)',
-                              textAlign: 'center',
-                            }}
-                          >
-                            <p style={{ ...styles.metricValue, fontSize: 20, color: tier.color }}>{tier.count}</p>
-                            <p style={{ ...styles.metricLabel, marginTop: 2 }}>{tier.label}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </motion.div>
-                ) : null}
-              </motion.div>
-            )}
-
-            {/* ─────────────────────────────────────
-               STEP: CYCLES & SPLIT (Compound only)
-               ───────────────────────────────────── */}
-            {currentStepName === 'cycles' && (
-              <motion.div
-                key="cycles"
-                custom={direction}
-                variants={stepVariants}
-                initial="enter"
-                animate="center"
-                exit="exit"
-                transition={{ duration: 0.25, ease: 'easeInOut' }}
-              >
-                <h2 style={styles.heading}>Cycles & Split</h2>
-                <p style={styles.subtext}>How many times should your money cycle?</p>
-
-                {/* Cycle chips */}
-                <div
-                  style={{
-                    display: 'flex',
-                    gap: 'var(--space-sm)',
-                    justifyContent: 'center',
-                    flexWrap: 'wrap',
-                    margin: 'var(--space-xl) 0 var(--space-xl)',
-                  }}
-                >
-                  {CYCLE_OPTIONS.map((c) => {
-                    const isJariyah = c === null
-                    const isSelected = cycles === c
+                  {[
+                    {
+                      key: 'direct',
+                      icon: <ArrowRight size={22} />,
+                      label: 'Direct',
+                      desc: 'Money reaches the cause today — immediate sadaqah',
+                      activeColor: 'var(--status-blue)',
+                      activeBg: 'rgba(96, 165, 250, 0.1)',
+                      activeIconBg: 'rgba(96, 165, 250, 0.15)',
+                    },
+                    {
+                      key: 'compound',
+                      icon: <RefreshCw size={22} />,
+                      label: 'Compound',
+                      desc: 'Money cycles through qard hassan loans first, then reaches the cause — multiplied impact',
+                      activeColor: 'var(--gold-mid)',
+                      activeBg: 'var(--gold-glow)',
+                      activeIconBg: 'var(--gold-glow-strong)',
+                    },
+                  ].map((option) => {
+                    const isSelected = investType === option.key
                     return (
-                      <button
-                        key={c === null ? 'jariyah' : c}
-                        onClick={() => setCycles(c)}
+                      <motion.button
+                        key={option.key}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => {
+                          setInvestType(option.key)
+                          setAlgorithmResult(null)
+                          if (option.key === 'compound') setCycles(1)
+                        }}
                         style={{
-                          fontFamily: "'DM Sans', sans-serif",
-                          fontSize: isJariyah ? 13 : 16,
-                          fontWeight: isSelected ? 600 : 500,
-                          padding: isJariyah ? '8px 20px' : '8px 18px',
-                          borderRadius: 'var(--radius-pill)',
-                          background: isSelected
-                            ? isJariyah
-                              ? 'linear-gradient(135deg, var(--gold-mid), var(--status-green))'
-                              : 'var(--gold-glow-strong)'
-                            : 'var(--bg-elevated)',
-                          border: isSelected
-                            ? isJariyah
-                              ? '1px solid var(--status-green)'
-                              : '1px solid var(--gold-mid)'
-                            : '1px solid var(--border-subtle)',
-                          color: isSelected
-                            ? isJariyah
-                              ? 'var(--text-inverse)'
-                              : 'var(--text-gold)'
-                            : 'var(--text-secondary)',
+                          flex: 1,
+                          padding: 'var(--space-xl) var(--space-md)',
+                          background: isSelected ? option.activeBg : 'var(--bg-elevated)',
+                          border: isSelected ? `2px solid ${option.activeColor}` : '1px solid var(--border-subtle)',
+                          borderRadius: 'var(--radius-lg)',
                           cursor: 'pointer',
-                          transition: 'var(--transition-fast)',
                           display: 'flex',
+                          flexDirection: 'column',
                           alignItems: 'center',
-                          gap: 4,
+                          gap: 'var(--space-md)',
+                          textAlign: 'center',
                         }}
                       >
-                        {isJariyah ? (
-                          <>
-                            <Infinity size={14} />
-                            Jariyah
-                          </>
-                        ) : (
-                          c
+                        <div style={{
+                          width: 48, height: 48, borderRadius: '50%',
+                          background: isSelected ? option.activeIconBg : 'var(--bg-overlay)',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          color: isSelected ? option.activeColor : 'var(--text-tertiary)',
+                        }}>
+                          {option.icon}
+                        </div>
+                        <span style={{
+                          fontFamily: "'Cormorant Garamond', serif", fontSize: 20, fontWeight: 600,
+                          color: isSelected ? option.activeColor : 'var(--text-primary)',
+                        }}>
+                          {option.label}
+                        </span>
+                        <span style={{
+                          fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5,
+                        }}>
+                          {option.desc}
+                        </span>
+                        {isSelected && (
+                          <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} style={{
+                            width: 20, height: 20, borderRadius: '50%', background: option.activeColor,
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          }}>
+                            <Check size={12} color="var(--text-inverse)" />
+                          </motion.div>
                         )}
-                      </button>
+                      </motion.button>
                     )
                   })}
                 </div>
+              </motion.div>
+            )}
 
-                {/* Split slider (hidden for Jariyah) */}
-                {cycles !== null && (
-                  <div style={{ marginTop: 'var(--space-md)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 'var(--space-sm)' }}>
-                      <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: 'var(--text-secondary)' }}>
-                        Sadaqah split after cycles
-                      </span>
-                      <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 15, fontWeight: 600, color: 'var(--text-gold)' }}>
-                        {splitPercent}%
-                      </span>
-                    </div>
-                    <input
-                      type="range"
-                      min={0}
-                      max={100}
-                      step={5}
-                      value={splitPercent}
-                      onChange={(e) => setSplitPercent(Number(e.target.value))}
+            {/* ─────────────────────────────────────
+               STEP: COMPOUND DETAILS (Pool Analysis + Cycles + Split)
+               ───────────────────────────────────── */}
+            {currentStepName === 'compound_details' && (
+              <motion.div
+                key="compound_details"
+                custom={direction}
+                variants={stepVariants}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{ duration: 0.25, ease: 'easeInOut' }}
+              >
+                <h2 style={styles.heading}>Pool Analysis & Cycles</h2>
+                <p style={styles.subtext}>How your money will be deployed through qard hassan</p>
+
+                {/* Algorithm output */}
+                {isComputing ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: 'var(--space-xl) 0' }}>
+                    <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}>
+                      <Loader2 size={32} color="var(--gold-mid)" />
+                    </motion.div>
+                    <p style={{ ...styles.subtext, marginTop: 'var(--space-md)' }}>Computing pool demand...</p>
+                  </div>
+                ) : algorithmResult ? (
+                  <>
+                    {/* Pool analysis card */}
+                    <motion.div
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
                       style={{
-                        width: '100%',
-                        accentColor: 'var(--gold-mid)',
-                        cursor: 'pointer',
+                        background: 'var(--bg-elevated)', border: '1px solid var(--border-default)',
+                        borderRadius: 'var(--radius-lg)', padding: 'var(--space-lg)', marginTop: 'var(--space-md)',
                       }}
-                    />
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: 'var(--text-tertiary)' }}>
-                        0% (return all)
-                      </span>
-                      <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: 'var(--text-tertiary)' }}>
-                        100% (donate all)
-                      </span>
+                    >
+                      <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 12, color: 'var(--text-tertiary)', margin: '0 0 var(--space-md) 0', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                        Based on current pool demand
+                      </p>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 'var(--space-md)' }}>
+                        <div>
+                          <p style={styles.metricLabel}>Cycle Time</p>
+                          <p style={styles.metricValue}>{algorithmResult.rangeMin}&ndash;{algorithmResult.rangeMax}mo</p>
+                        </div>
+                        <div>
+                          <p style={styles.metricLabel}>Families/Cycle</p>
+                          <p style={styles.metricValue}>{algorithmResult.familiesPerCycle}</p>
+                        </div>
+                        <div>
+                          <p style={styles.metricLabel}>Deployment</p>
+                          <p style={{ ...styles.metricValue, fontSize: 13 }}>
+                            {algorithmResult.deploymentShape.micro}M {algorithmResult.deploymentShape.standard}S {algorithmResult.deploymentShape.major}L
+                          </p>
+                        </div>
+                      </div>
+                    </motion.div>
+
+                    {/* Cycle selection */}
+                    <div style={{ marginTop: 'var(--space-xl)' }}>
+                      <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: 'var(--text-secondary)', marginBottom: 'var(--space-sm)' }}>
+                        Number of cycles
+                      </p>
+                      <div style={{ display: 'flex', gap: 'var(--space-sm)', justifyContent: 'center', flexWrap: 'wrap' }}>
+                        {[1, 2, 3, 5, 10].map((c) => (
+                          <button
+                            key={c}
+                            onClick={() => setCycles(c)}
+                            style={{
+                              fontFamily: "'DM Sans', sans-serif", fontSize: 16, fontWeight: cycles === c ? 600 : 500,
+                              padding: '8px 18px', borderRadius: 'var(--radius-pill)',
+                              background: cycles === c ? 'var(--gold-glow-strong)' : 'var(--bg-elevated)',
+                              border: cycles === c ? '1px solid var(--gold-mid)' : '1px solid var(--border-subtle)',
+                              color: cycles === c ? 'var(--text-gold)' : 'var(--text-secondary)',
+                              cursor: 'pointer', transition: 'var(--transition-fast)',
+                            }}
+                          >
+                            {c}
+                          </button>
+                        ))}
+                      </div>
                     </div>
 
-                    {/* Hadith for below 100% */}
-                    {splitPercent < 100 && (
-                      <motion.p
-                        initial={{ opacity: 0, y: 6 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        style={{
-                          fontFamily: "'Cormorant Garamond', serif",
-                          fontSize: 14,
-                          fontStyle: 'italic',
-                          color: 'var(--text-gold)',
-                          textAlign: 'center',
-                          margin: 'var(--space-lg) 0 0',
-                          lineHeight: 1.6,
-                          padding: '0 var(--space-md)',
-                        }}
-                      >
-                        &ldquo;Every loan given is sadaqah until it is repaid&rdquo; &mdash; Ibn Majah
-                      </motion.p>
-                    )}
-                  </div>
-                )}
-
-                {cycles === null && (
-                  <div style={{ textAlign: 'center', padding: 'var(--space-md) 0' }}>
-                    <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: 'var(--text-secondary)', margin: 0, lineHeight: 1.6 }}>
-                      Your money cycles forever &mdash; 100% dedicated as perpetual sadaqah jariyah.
-                    </p>
-                  </div>
-                )}
+                    {/* Split slider */}
+                    <div style={{ marginTop: 'var(--space-xl)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 'var(--space-sm)' }}>
+                        <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 13, color: 'var(--text-secondary)' }}>
+                          Sadaqah split after cycles
+                        </span>
+                        <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 15, fontWeight: 600, color: 'var(--text-gold)' }}>
+                          {splitPercent}%
+                        </span>
+                      </div>
+                      <input type="range" min={0} max={100} step={5} value={splitPercent}
+                        onChange={(e) => setSplitPercent(Number(e.target.value))}
+                        style={{ width: '100%', accentColor: 'var(--gold-mid)', cursor: 'pointer' }}
+                      />
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: 'var(--text-tertiary)' }}>0% (return all)</span>
+                        <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: 'var(--text-tertiary)' }}>100% (donate all)</span>
+                      </div>
+                      {splitPercent < 100 && (
+                        <motion.p initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} style={{
+                          fontFamily: "'Cormorant Garamond', serif", fontSize: 14, fontStyle: 'italic',
+                          color: 'var(--text-gold)', textAlign: 'center', margin: 'var(--space-md) 0 0', lineHeight: 1.6,
+                        }}>
+                          &ldquo;Every loan given is sadaqah until it is repaid&rdquo; &mdash; Ibn Majah
+                        </motion.p>
+                      )}
+                    </div>
+                  </>
+                ) : null}
               </motion.div>
             )}
 

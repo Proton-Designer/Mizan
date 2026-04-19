@@ -360,7 +360,53 @@ function Step1IRS({ state, dispatch }) {
   }, [searchQuery, dispatch])
 
   const selectOrg = (org) => {
-    dispatch({ type: 'SET_FIELDS', fields: { selectedOrg: org, step: 2 } })
+    // Auto-fill contact fields with demo data based on org name
+    const orgName = (org.name || org.sort_name || '').toLowerCase()
+    let website = ''
+    let contactName = 'Admin User'
+    let contactTitle = 'Director of Digital Fundraising'
+    let contactEmail = 'admin@organization.org'
+
+    // Try to guess website from org name
+    if (orgName.includes('islamic relief')) {
+      website = 'irusa.org'
+      contactName = 'Aisha Rahman'
+      contactEmail = 'aisha@irusa.org'
+    } else if (orgName.includes('penny appeal')) {
+      website = 'pennyappealusa.org'
+      contactName = 'Sarah Ahmed'
+      contactEmail = 'sarah@pennyappealusa.org'
+    } else if (orgName.includes('zakat foundation')) {
+      website = 'zakat.org'
+      contactName = 'Omar Hassan'
+      contactEmail = 'omar@zakat.org'
+    } else if (orgName.includes('helping hand') || orgName.includes('hhrd')) {
+      website = 'hhrd.org'
+      contactName = 'Ali Khan'
+      contactEmail = 'ali@hhrd.org'
+    } else if (orgName.includes('icna')) {
+      website = 'icnarelief.org'
+      contactName = 'Fatima Syed'
+      contactEmail = 'fatima@icnarelief.org'
+    } else {
+      // Generic: derive domain from org name
+      const slug = orgName.replace(/[^a-z0-9]+/g, '').slice(0, 20)
+      website = slug ? `${slug}.org` : ''
+      contactEmail = slug ? `admin@${slug}.org` : ''
+    }
+
+    dispatch({
+      type: 'SET_FIELDS',
+      fields: {
+        selectedOrg: org,
+        step: 2,
+        website,
+        contactName,
+        contactTitle,
+        contactEmail,
+        contactPhone: '(512) 555-0192',
+      }
+    })
   }
 
   return (

@@ -489,8 +489,8 @@ export function PortfolioProvider({ children }) {
 
       const newPosition = {
         id: posId,
-        ngoId: ngo.id,
-        ngoName: ngo.name,
+        ngoId: ngo?.id || 'jariyah-pool',
+        ngoName: ngo?.name || 'Qard Hassan Pool (Jariyah)',
         type: 'compound',
         mode: cycles === null ? 'jariyah' : 'standard',
         amount,
@@ -504,19 +504,20 @@ export function PortfolioProvider({ children }) {
         currentBorrowers: assignedBorrowers,
         vaultPersonId: null,
         createdAt: now.toISOString(),
-        category: ngo.category || 'general',
+        category: ngo?.category || 'community',
       }
 
       setPositions((prev) => [...prev, newPosition])
+      const ngoLabel = ngo?.name || 'Qard Hassan Pool (Jariyah)'
       logTransaction(
         'invest_compound',
         -amount,
         cycles === null
-          ? `Jariyah commitment to ${ngo.name}`
-          : `Compound investment to ${ngo.name} (${cycles} cycles)`,
+          ? `Jariyah commitment to ${ngoLabel}`
+          : `Compound investment to ${ngoLabel} (${cycles} cycles)`,
         newBalance,
         posId,
-        ngo.name
+        ngoLabel
       )
 
       return { success: true, positionId: posId }

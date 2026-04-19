@@ -20,25 +20,70 @@ import Card from '../../components/ui/Card'
    ───────────────────────────────────────────── */
 
 const CATEGORY_COLORS = {
-  emergency: 'var(--status-red, #EF4444)',
-  water: 'var(--status-blue, #3B82F6)',
-  food: 'var(--status-green, #10B981)',
-  orphan: 'var(--status-purple, #8B5CF6)',
-  medical: 'var(--status-yellow, #F59E0B)',
-  community: 'var(--text-muted, #9CA3AF)',
-  refugees: 'var(--text-muted, #9CA3AF)',
-  education: 'var(--text-muted, #9CA3AF)',
+  emergency: '#EF4444',
+  water: '#3B82F6',
+  food: '#10B981',
+  orphan: '#8B5CF6',
+  medical: '#F59E0B',
+  community: '#6B7280',
+  refugees: '#F97316',
+  education: '#06B6D4',
+  mosque: '#6B7280',
+  advocacy: '#A78BFA',
+  youth: '#34D399',
+  women: '#EC4899',
+  media: '#8B5CF6',
+  finance: '#F59E0B',
 }
 
 const CATEGORY_LABELS = {
-  emergency: 'Emergency',
-  water: 'Water',
-  food: 'Food',
-  orphan: 'Orphan',
-  medical: 'Medical',
-  community: 'Community',
-  refugees: 'Refugees',
-  education: 'Education',
+  emergency: 'Crisis Response',
+  water: 'Clean Water & Sanitation',
+  food: 'Food Security',
+  orphan: 'Orphan Care',
+  medical: 'Healthcare Access',
+  community: 'Community & Masjid',
+  refugees: 'Displacement & Refuge',
+  education: 'Education & Literacy',
+  mosque: 'Community & Masjid',
+  advocacy: 'Advocacy',
+  youth: 'Youth',
+  women: "Women's Programs",
+  media: 'Media & Dawah',
+  finance: 'Islamic Finance',
+}
+
+// Region colors for the geography view
+const REGION_COLORS = {
+  Yemen: '#EF4444',
+  'Gaza': '#F97316',
+  Somalia: '#3B82F6',
+  Pakistan: '#10B981',
+  Bangladesh: '#06B6D4',
+  Syria: '#F59E0B',
+  Sudan: '#8B5CF6',
+  USA: '#6B7280',
+  Morocco: '#EC4899',
+  Other: '#A78BFA',
+}
+
+// Mode colors
+const MODE_COLORS = {
+  jariyah: '#10B981',
+  compound: '#D4A843',
+  direct: '#3B82F6',
+}
+
+const MODE_LABELS = {
+  jariyah: 'Jariyah (perpetual)',
+  compound: 'Compound (cycling)',
+  direct: 'Direct (settled)',
+}
+
+const MODE_ICONS = {
+  jariyah: '✦',
+  compound: '⟳',
+  direct: '✓',
 }
 
 function generateRisingData(count, seed) {
@@ -405,20 +450,75 @@ function PerformanceChart() {
 }
 
 function DonutChart({ positions }) {
-  const segments = useMemo(() => {
-    const catTotals = {}
+  const [view, setView] = useState('cause') // 'cause' | 'region' | 'mode'
+
+  // Compute segments for all three views
+  const causeSegments = useMemo(() => {
+    const totals = {}
     positions.forEach((p) => {
       const cat = p.category || 'community'
-      catTotals[cat] = (catTotals[cat] || 0) + p.amount
+      totals[cat] = (totals[cat] || 0) + p.amount
     })
-    const total = Object.values(catTotals).reduce((s, v) => s + v, 0) || 1
-    return Object.entries(catTotals).map(([cat, amt]) => ({
-      category: cat,
-      amount: amt,
-      percent: Math.round((amt / total) * 100),
-      color: CATEGORY_COLORS[cat] || 'var(--text-muted)',
-    }))
+    const total = Object.values(totals).reduce((s, v) => s + v, 0) || 1
+    return Object.entries(totals)
+      .map(([key, amt]) => ({
+        key, label: CATEGORY_LABELS[key] || key, amount: amt,
+        percent: Math.round((amt / total) * 100),
+        color: CATEGORY_COLORS[key] || '#6B7280',
+      }))
+      .sort((a, b) => b.amount - a.amount)
   }, [positions])
+
+  const regionSegments = useMemo(() => {
+    const totals = {}
+    positions.forEach((p) => {
+      // Derive region from NGO data or category
+      const regions = {
+        'islamic-relief-usa': 'Yemen', 'zakat-foundation': 'Somalia',
+        'penny-appeal-usa': 'Gaza', 'human-appeal-usa': 'Yemen',
+        'hhrd': 'Pakistan', 'icna-relief': 'USA', 'imana': 'Syria',
+        'muslim-aid-usa': 'Somalia',
+      }
+      const region = regions[p.ngoId] || (p.ngoId === 'jariyah-pool' ? 'USA' : 'Other')
+      totals[region] = (totals[region] || 0) + p.amount
+    })
+    const total = Object.values(totals).reduce((s, v) => s + v, 0) || 1
+    return Object.entries(totals)
+      .map(([key, amt]) => ({
+        key, label: key === 'Gaza' ? 'Gaza / Palestine' : key, amount: amt,
+        percent: Math.round((amt / total) * 100),
+        color: REGION_COLORS[key] || '#A78BFA',
+      }))
+      .sort((a, b) => b.amount - a.amount)
+  }, [positions])
+
+  const modeSegments = useMemo(() => {
+    const totals = { jariyah: 0, compound: 0, direct: 0 }
+    positions.forEach((p) => {
+      const mode = p.mode || (p.type === 'direct' ? 'direct' : 'compound')
+      totals[mode] = (totals[mode] || 0) + p.amount
+    })
+    const total = Object.values(totals).reduce((s, v) => s + v, 0) || 1
+    return Object.entries(totals)
+      .filter(([, amt]) => amt > 0)
+      .map(([key, amt]) => ({
+        key, label: MODE_LABELS[key] || key, amount: amt,
+        percent: Math.round((amt / total) * 100),
+        color: MODE_COLORS[key] || '#6B7280',
+        icon: MODE_ICONS[key] || '',
+      }))
+      .sort((a, b) => b.amount - a.amount)
+  }, [positions])
+
+  const segments = view === 'cause' ? causeSegments : view === 'region' ? regionSegments : modeSegments
+
+  // Concentration warning (cause view only)
+  const concentrationWarning = useMemo(() => {
+    if (view !== 'cause') return null
+    const top = causeSegments[0]
+    if (top && top.percent > 50) return top
+    return null
+  }, [view, causeSegments])
 
   const size = 200
   const strokeW = 30
@@ -429,22 +529,47 @@ function DonutChart({ positions }) {
 
   let cumulativePercent = 0
 
+  const VIEWS = [
+    { key: 'cause', label: 'By Cause' },
+    { key: 'region', label: 'By Region' },
+    { key: 'mode', label: 'By Mode' },
+  ]
+
   return (
     <Card>
-      <h3
-        style={{
-          fontFamily: "'Cormorant Garamond', serif",
-          fontSize: '20px',
-          fontWeight: 600,
-          color: 'var(--text-primary)',
-          margin: '0 0 16px 0',
-        }}
-      >
+      <h3 style={{
+        fontFamily: "'Cormorant Garamond', serif", fontSize: '20px', fontWeight: 600,
+        color: 'var(--text-primary)', margin: '0 0 12px 0',
+      }}>
         Portfolio Composition
       </h3>
 
+      {/* Toggle */}
+      <div style={{
+        display: 'flex', gap: '4px', marginBottom: '16px',
+        background: 'var(--bg-deep)', borderRadius: 'var(--radius-pill)', padding: '3px',
+      }}>
+        {VIEWS.map((v) => (
+          <button
+            key={v.key}
+            onClick={() => { cumulativePercent = 0; setView(v.key) }}
+            style={{
+              flex: 1, padding: '6px 0', border: 'none', borderRadius: 'var(--radius-pill)',
+              fontFamily: "'DM Sans', sans-serif", fontSize: '11px', fontWeight: 500,
+              cursor: 'pointer', transition: 'all 200ms',
+              background: view === v.key ? 'var(--gold-glow-strong)' : 'transparent',
+              color: view === v.key ? 'var(--text-gold)' : 'var(--text-tertiary)',
+            }}
+          >
+            {v.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Donut */}
       <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px' }}>
         <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+          {(() => { cumulativePercent = 0; return null })()}
           {segments.map((seg, i) => {
             const offset = cumulativePercent
             cumulativePercent += seg.percent
@@ -454,19 +579,13 @@ function DonutChart({ positions }) {
 
             return (
               <motion.circle
-                key={seg.category}
-                cx={cx}
-                cy={cy}
-                r={radius}
-                fill="none"
-                stroke={seg.color}
-                strokeWidth={strokeW}
-                strokeDasharray={`${dashLength} ${dashGap}`}
-                strokeLinecap="butt"
+                key={`${view}-${seg.key}`}
+                cx={cx} cy={cy} r={radius} fill="none"
+                stroke={seg.color} strokeWidth={strokeW} strokeLinecap="butt"
                 transform={`rotate(${rotation} ${cx} ${cy})`}
                 initial={{ strokeDasharray: `0 ${circumference}` }}
                 animate={{ strokeDasharray: `${dashLength} ${dashGap}` }}
-                transition={{ duration: 0.8, delay: i * 0.15, ease: 'easeOut' }}
+                transition={{ duration: 0.6, delay: i * 0.08, ease: 'easeOut' }}
               />
             )
           })}
@@ -474,36 +593,41 @@ function DonutChart({ positions }) {
       </div>
 
       {/* Legend */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
         {segments.map((seg) => (
-          <div
-            key={seg.category}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              fontFamily: "'DM Sans', sans-serif",
-              fontSize: '13px',
-            }}
-          >
-            <span
-              style={{
-                width: 10,
-                height: 10,
-                borderRadius: '50%',
-                background: seg.color,
-                flexShrink: 0,
-              }}
-            />
+          <div key={seg.key} style={{
+            display: 'flex', alignItems: 'center', gap: '8px',
+            fontFamily: "'DM Sans', sans-serif", fontSize: '12px',
+          }}>
+            <span style={{ width: 8, height: 8, borderRadius: '50%', background: seg.color, flexShrink: 0 }} />
             <span style={{ color: 'var(--text-secondary)', flex: 1 }}>
-              {CATEGORY_LABELS[seg.category] || seg.category}
+              {seg.icon ? `${seg.icon} ` : ''}{seg.label}
             </span>
-            <span style={{ color: 'var(--text-muted)', fontWeight: 500 }}>
+            <span style={{ color: 'var(--text-tertiary)', fontWeight: 500, fontSize: '11px' }}>
+              ${seg.amount.toLocaleString()}
+            </span>
+            <span style={{ color: 'var(--text-tertiary)', fontWeight: 600, width: 32, textAlign: 'right' }}>
               {seg.percent}%
             </span>
           </div>
         ))}
       </div>
+
+      {/* Concentration warning */}
+      {concentrationWarning && (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}
+          style={{
+            marginTop: '12px', padding: '10px 12px',
+            background: 'rgba(251, 191, 36, 0.08)', border: '1px solid rgba(251, 191, 36, 0.2)',
+            borderRadius: 'var(--radius-md)',
+          }}
+        >
+          <p style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '11px', color: 'var(--status-yellow)', margin: 0, lineHeight: 1.5 }}>
+            {concentrationWarning.percent}% concentrated in {concentrationWarning.label}. Consider broadening to other causes for a more resilient impact portfolio.
+          </p>
+        </motion.div>
+      )}
     </Card>
   )
 }
